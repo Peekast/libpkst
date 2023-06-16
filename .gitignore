@@ -1,0 +1,5 @@
+
+*.mp4
+lib/.DS_Store
+lib/main
+lib/main.c

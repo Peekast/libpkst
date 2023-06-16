@@ -1,0 +1,12 @@
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+char *pkst_strdup(const char *s) {
+    char *d = malloc(strlen(s) + 1);   // Asigna memoria para la cadena
+    if (d == NULL) return NULL;        // No se pudo asignar memoria
+    strcpy(d, s);                      // Copia la cadena
+    return d;                          // Devuelve la nueva cadena
+}
+
