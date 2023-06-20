@@ -23,7 +23,7 @@ typedef struct {
 } PKSTAudioConfig;
 
 
-extern void pkst_cleanup_decoder_encoder(PKSTAudioEncode *ctx);
+extern void pkst_cleanup_decoder_encoder(PKSTAudioEncode **ctx);
 
 extern int pkst_open_audio_decoder_encoder(const AVStream *in_audio_stream, const PKSTAudioConfig *config, PKSTAudioEncode **ed_ctx);
 

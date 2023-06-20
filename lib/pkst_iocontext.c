@@ -4,9 +4,11 @@
 
 #include "pkst_iocontext.h"
 #include "pkst_strings.h"
-#include "pkst_stats.h"
 #include "pkst_msgproto.h"
+#include "pkst_log.h"
 #include <jansson.h>
+#include <stdarg.h>
+#include <time.h>
 #include "keyvalue.h"
 
 // Includes the header file for the libavformat library.
@@ -38,14 +40,16 @@ int pkst_alloc_encoder_config(PKSTEncoderConfig **enc, char *in, int listen, int
     }
 
     // If input string is not NULL, duplicate the string, else set to NULL
-    new_enc->in = in ? pkst_strdup(in) : NULL;
+    new_enc->in = in && strlen(in) != 0 ? pkst_strdup(in) : NULL;
     // If input type string is not NULL, duplicate the string, else set to NULL
-    new_enc->in_type = in_type ? pkst_strdup(in_type) : NULL;
+    new_enc->in_type = in_type && strlen(in_type) != 0 ? pkst_strdup(in_type) : NULL;
     // If tcpstats string is not NULL, duplicate the string, else set to NULL
-    new_enc->tcpstats = tcpstats ? pkst_strdup(tcpstats) : NULL;
+    new_enc->tcpstats = tcpstats && strlen(tcpstats) != 0 ? pkst_strdup(tcpstats) : NULL;
 
     // If any of the strdup operations failed, free all allocated memory and return -1
-    if ((in && new_enc->in == NULL) || (in_type && new_enc->in_type == NULL) || (tcpstats && new_enc->tcpstats == NULL)) {
+    if ((in && strlen(in) != 0 && new_enc->in == NULL) || 
+        (in_type && strlen(in_type) != 0 && new_enc->in_type == NULL) || 
+        (tcpstats && strlen(tcpstats) != 0 && new_enc->tcpstats == NULL)) {
         if (new_enc->in) free(new_enc->in);
         if (new_enc->in_type) free(new_enc->in_type);
         if (new_enc->tcpstats) free(new_enc->tcpstats);
@@ -54,8 +58,6 @@ int pkst_alloc_encoder_config(PKSTEncoderConfig **enc, char *in, int listen, int
     }
     new_enc->timeout = timeout;
     new_enc->listen  = listen;
-    new_enc->kv_audio_req = NULL;
-    new_enc->kv_video_req = NULL;
     new_enc->audio_config = NULL;
     new_enc->video_config = NULL;
 
@@ -111,31 +113,6 @@ int pkst_add_output_encoder_config(PKSTEncoderConfig *enc, PKSTOutputConfig *out
     return 0;
 }
 
-
-/* 
- * Sets the Key-Value audio requirements in the Encoder Configuration structure.
- *
- * Parameters:
- * - enc: The pointer to the PKSTEncoderConfig structure in which the audio requirements need to be set.
- * - req: The string containing the Key-Value audio requirements.
- *
- * This function takes the Key-Value audio requirements as a string and stores it in the PKSTEncoderConfig structure. 
- * It does so by duplicating the string (so the original can be safely modified or freed) and storing the copy.
- * 
- * If the passed encoder config or the requirements string is NULL, the function will return -1.
- * 
- * Return value:
- * On success, the function returns 0. 
- * If the encoder config or the requirements string is NULL, the function will return -1.
- */
-int pkst_set_kv_audio_requirements(PKSTEncoderConfig *enc, const char *req) {
-    if (!enc || !req) 
-        return -1;
-    
-    enc->kv_audio_req = pkst_strdup(req);
-    return 0;
-}
-
 /**
  * @brief Add an audio encoder configuration to an encoder configuration structure.
  *
@@ -178,26 +155,24 @@ void pkst_dump_encoder_config(PKSTEncoderConfig *enc) {
     int i;
 
     if (enc == NULL) {
-        printf("Encoder Context: NULL\n");
+        pkst_log(NULL,0,"Encoder Context: NULL\n");
         return;
     }
 
-    printf("Encoder Context:\n");
-    printf("    Input: %s\n", enc->in ? enc->in : "NULL");
-    printf("    Input Type: %s\n", enc->in_type ? enc->in_type : "NULL");
-    printf("    Listen: %s\n", enc->listen ? "true" : "false");
-    printf("    Network timeout: %d (milliseconds)\n", enc->timeout);
-    printf("    TCP Stats: %s\n", enc->tcpstats ? enc->tcpstats : "NULL");
-    printf("    Audio Requirements: %s\n", enc->kv_audio_req ? enc->kv_audio_req : "NULL");
-    printf("    Video Requirements: %s\n", enc->kv_video_req ? enc->kv_video_req : "NULL");
-    printf("    Output Length: %d\n", enc->outs_len);
+    pkst_log(NULL,0,"Encoder Context:\n");
+    pkst_log(NULL,0,"    Input: %s\n", enc->in ? enc->in : "NULL");
+    pkst_log(NULL,0,"    Input Type: %s\n", enc->in_type ? enc->in_type : "NULL");
+    pkst_log(NULL,0,"    Listen: %s\n", enc->listen ? "true" : "false");
+    pkst_log(NULL,0,"    Network timeout: %d (milliseconds)\n", enc->timeout);
+    pkst_log(NULL,0,"    TCP Stats: %s\n", enc->tcpstats ? enc->tcpstats : "NULL");
+    pkst_log(NULL,0,"    Output Length: %d\n", enc->outs_len);
 
     if (enc->audio_config) {
-        printf("    Audio Config:\n");
-        printf("        Audio Codec: %s\n", enc->audio_config->codec ? enc->audio_config->codec : "NULL");
-        printf("        Audio Bitrate (bps): %d\n", enc->audio_config->bitrate_bps);
-        printf("        Audio Channels: %d\n", enc->audio_config->channels);
-        printf("        Sample Rate: %d\n", enc->audio_config->sample_rate);
+        pkst_log(NULL,0,"    Audio Config:\n");
+        pkst_log(NULL,0,"        Audio Codec: %s\n", enc->audio_config->codec ? enc->audio_config->codec : "NULL");
+        pkst_log(NULL,0,"        Audio Bitrate (bps): %d\n", enc->audio_config->bitrate_bps);
+        pkst_log(NULL,0,"        Audio Channels: %d\n", enc->audio_config->channels);
+        pkst_log(NULL,0,"        Sample Rate: %d\n", enc->audio_config->sample_rate);
     }
 
     if (enc->video_config) {
@@ -205,11 +180,11 @@ void pkst_dump_encoder_config(PKSTEncoderConfig *enc) {
     }
 
     for (i = 0; i < enc->outs_len; i++) {
-        printf("    Output[%d]:\n", i);
-        printf("        Destination: %s\n", enc->outs[i]->dst ? enc->outs[i]->dst : "NULL");
-        printf("        Destination Type: %s\n", enc->outs[i]->dst_type ? enc->outs[i]->dst_type : "NULL");
-        printf("        KV Options: %s\n", enc->outs[i]->kv_opts ? enc->outs[i]->kv_opts : "NULL");
-        printf("        On Fail Ignore: %d\n", enc->outs[i]->onfail_ignore);
+        pkst_log(NULL,0,"    Output[%d]:\n", i);
+        pkst_log(NULL,0,"        Destination: %s\n", enc->outs[i]->dst ? enc->outs[i]->dst : "NULL");
+        pkst_log(NULL,0,"        Destination Type: %s\n", enc->outs[i]->dst_type ? enc->outs[i]->dst_type : "NULL");
+        pkst_log(NULL,0,"        KV Options: %s\n", enc->outs[i]->kv_opts ? enc->outs[i]->kv_opts : "NULL");
+        pkst_log(NULL,0,"        On Fail Ignore: %d\n", enc->outs[i]->onfail_ignore);
     }
 }
 
@@ -218,7 +193,7 @@ void pkst_dump_encoder_config(PKSTEncoderConfig *enc) {
  * It receives a pointer to a PKSTOutputConfig and frees all its members and itself.
  * Note that after calling this function, the pointer is no longer valid and should not be used.
  */
-void pkst_free_output_config(PKSTOutputConfig *out) {
+static void pkst_free_output_config(PKSTOutputConfig *out) {
     if (out) {
         if (out->dst) {
             free(out->dst);
@@ -254,12 +229,6 @@ void pkst_free_encoder_config(PKSTEncoderConfig **enc) {
         if ((*enc)->tcpstats) {
             free((*enc)->tcpstats);
         }
-        if ((*enc)->kv_audio_req) {
-            free((*enc)->kv_audio_req);
-        }
-        if ((*enc)->kv_video_req) {
-            free((*enc)->kv_video_req);
-        }
         if ((*enc)->audio_config) {
             if ((*enc)->audio_config->codec) free((*enc)->audio_config->codec);
             free((*enc)->audio_config);
@@ -287,9 +256,11 @@ void pkst_free_encoder_config(PKSTEncoderConfig **enc) {
 void pkst_close_input_context(PKSTInputCtx **ctx) {
     if (!ctx || !*ctx) return;
 
-    if ((*ctx)->in_ctx) {
+    if ((*ctx)->in_ctx)
         avformat_close_input(&((*ctx)->in_ctx));
-    }
+
+    if ((*ctx)->a_enc_ctx) 
+        pkst_cleanup_decoder_encoder(&((*ctx)->a_enc_ctx));
 
     free(*ctx);
     *ctx = NULL;
@@ -413,7 +384,7 @@ AVStream *pkst_get_audio_stream(PKSTInputCtx *ctx) {
  *
  * @return On success, a pointer to the created AVFormatContext. On failure, returns NULL.
  */
-AVFormatContext *pkst_open_output_context(PKSTOutputConfig *config, AVStream *remux[2], AVCodecContext *encoder[2]) {
+static AVFormatContext *pkst_open_output_context(PKSTOutputConfig *config, AVStream *remux[2], AVCodecContext *encoder[2]) {
     const AVOutputFormat *ofmt;
     AVFormatContext *ctx = NULL;
     AVDictionary *opts = NULL;
@@ -501,87 +472,6 @@ cleanup:
 } 
 
 /**
- * @brief Open an output context for remuxing based on the provided configuration and input AVStreams.
- * @param config The output configuration used to initialize the output context.
- * @param in_avstream An array of input AVStreams. Expected to be of size 2, with in_avstream[0] being the video AVStream and in_avstream[1] being the audio AVStream.
- * @return AVFormatContext* The initialized output context. NULL if there was an error during initialization.
- * 
- * This function will allocate an AVFormatContext for output based on the provided PKSTOutputConfig 'config' and input AVStreams. 
- * It will also open the output file (if necessary) and write the output format header.
- * The function will free all allocated resources and return NULL if there's an error at any point.
- * If the function returns a non-NULL AVFormatContext, the caller is responsible for eventually freeing the AVFormatContext using avformat_free_context().
- 
-AVFormatContext *pkst_open_output_context_for_remux(PKSTOutputConfig *config, AVStream *in_avstream[2]) {
-    const AVOutputFormat *ofmt;
-    AVFormatContext *ctx = NULL;
-    AVDictionary *opts = NULL;
-    AVStream *out_stream = NULL;
-    KeyValueList *kv_opts;
-    int i, ret = 0;
-
-    avformat_alloc_output_context2(&ctx, NULL, config->dst_type, config->dst);
-    if (!ctx) return NULL;
-
-    ofmt = ctx->oformat;
-
-    if (in_avstream[PKST_VIDEO_STREAM_OUTPUT]) {
-        out_stream = avformat_new_stream(ctx, NULL);
-        if (!out_stream) goto cleanup;
-
-        ret = avcodec_parameters_copy(out_stream->codecpar, in_avstream[PKST_VIDEO_STREAM_OUTPUT]->codecpar);
-        if (ret < 0) goto cleanup;
-
-        out_stream->codecpar->codec_tag = 0;
-        av_dict_set(&(out_stream->metadata), "handler_name",HANDLER_NAME, 0);
-    }
-
-    if (in_avstream[PKST_AUDIO_STREAM_OUTPUT]) {
-        out_stream = avformat_new_stream(ctx, NULL);
-        if (!out_stream) goto cleanup;
-
-        ret = avcodec_parameters_copy(out_stream->codecpar, in_avstream[PKST_AUDIO_STREAM_OUTPUT]->codecpar);
-        if (ret < 0) goto cleanup;
-
-        out_stream->codecpar->codec_tag = 0;
-        av_dict_set(&(out_stream->metadata), "handler_name", HANDLER_NAME, 0);
-    }
-
-    if (!(ofmt->flags & AVFMT_NOFILE)) {
-        ret = avio_open(&ctx->pb, config->dst, AVIO_FLAG_WRITE);
-        if (ret < 0) goto cleanup;
-    }
-
-    if (config->kv_opts) {
-        kv_opts = parse_kv_list(config->kv_opts, PKST_PAIR_DELIM, PKST_KV_DELIM);
-        if (kv_opts) {
-            dump_kv_list(kv_opts);
-            for (i=0; i < kv_opts->count; i++) 
-                av_dict_set(&opts, kv_opts->items[i].key, kv_opts->items[i].value, 0);
-            free_kv_list(kv_opts);
-            kv_opts = NULL;
-        }
-    }
-
-    if (opts) {
-        ret = avformat_write_header(ctx, &opts);
-        av_dict_free(&opts);
-    } else {
-        ret = avformat_write_header(ctx, NULL);
-    }
-    if (ret < 0) goto close;
-
-    return ctx;
-
-close:
-    if (ctx && !(ofmt->flags & AVFMT_NOFILE))
-        avio_closep(&ctx->pb);
-cleanup:
-    if (ctx)
-        avformat_free_context(ctx);
-    return NULL;
-} 
-*/
-/**
  * @brief Open multiple output contexts for remuxing based on the provided configuration and input context.
  * @param config The encoder configuration, which contains information about the outputs.
  * @param in_ctx The input context, which contains information about the input streams.
@@ -602,12 +492,21 @@ int pkst_open_multiple_ouputs_context(PKSTEncoderConfig *config, PKSTInputCtx *i
    PKSTOutProcCtx *ctx_p;
    int vindex;
    int aindex;
-   int i, j;
+   int i; //, j;
 
     *out_ctx = malloc(sizeof(PKSTMultiOutCtx));
     memset(*out_ctx, 0, sizeof(PKSTMultiOutCtx));
 
     if (*out_ctx == NULL) return -1;
+
+    (*out_ctx)->stats = malloc(sizeof(PKSTStats));
+    if (!(*out_ctx)->stats) return -1;
+
+
+    (*out_ctx)->stats->input_pkts  = 0;
+    (*out_ctx)->stats->output_pkts = 0;
+    (*out_ctx)->stats->start_time  = time(NULL);
+
 
     vindex = in_ctx->streams[PKST_VIDEO_STREAM_OUTPUT];
     aindex = in_ctx->streams[PKST_AUDIO_STREAM_OUTPUT];
@@ -651,6 +550,9 @@ int pkst_open_multiple_ouputs_context(PKSTEncoderConfig *config, PKSTInputCtx *i
     return 0; 
 
 cleanup:
+    (*out_ctx)->ctx_len = i;
+    pkst_close_outputs_contexts(out_ctx);
+/*
     for (j = 0; j < i; j++) {
         if ((*out_ctx)->ctx[j]) {
             if ((*out_ctx)->ctx[j]->dst)
@@ -666,6 +568,7 @@ cleanup:
     }
     free(*out_ctx);
     *out_ctx = NULL;
+*/
     return -1;
 }
 
@@ -695,6 +598,8 @@ void pkst_close_outputs_contexts(PKSTMultiOutCtx **out_ctxs) {
                 free(out_ctx);
             }
         }
+        if ((*out_ctxs)->stats)
+            free((*out_ctxs)->stats);
         free(*out_ctxs);
         *out_ctxs = NULL;
     }
@@ -715,7 +620,7 @@ void pkst_close_outputs_contexts(PKSTMultiOutCtx **out_ctxs) {
  * @param out_len The length of the array of output contexts.
  * @return 0 on success, -1 if an error occurred.
  */
-int pkst_send_AVPacket_multiple_contexts(AVPacket *packet, AVRational in_timebase, int stream_type, PKSTOutProcCtx *outputs[], size_t out_len) {
+static int pkst_send_AVPacket_multiple_contexts(AVPacket *packet, AVRational in_timebase, int stream_type, PKSTOutProcCtx *outputs[], size_t out_len, int *fail) {
     AVStream *out_stream;
     AVPacket *pkt;
 
@@ -739,13 +644,16 @@ int pkst_send_AVPacket_multiple_contexts(AVPacket *packet, AVRational in_timebas
         ret = av_interleaved_write_frame(out->out_ctx, pkt);
         if (ret < 0) {
             out->status = ret;
+            if (fail)
+                *fail = BOOL_TRUE;
             if (!out->onfail_ignore) {
-                av_packet_unref(pkt);
+                av_packet_free(&pkt);
                 av_packet_unref(packet);
                 return ret;
             }
         }    
-        av_packet_unref(pkt);
+        av_packet_free(&pkt);
+
     }
     av_packet_unref(packet);
     return 0;
@@ -771,56 +679,6 @@ void pkst_write_trailers_multiple_contexts(PKSTOutProcCtx *outputs[], size_t out
         }
     }
 }
-
-/**
- * @brief Remuxes an input context into multiple output contexts.
- * 
- * @param in Pointer to the input context (PKSTInputCtx).
- * @param out Pointer to the output contexts (PKSTMultiOutCtx).
- * 
- * @return int Returns 0 on success, AVERROR_EOF when the end of the input stream is reached,
- *         -1 if either input or output context is NULL or packet allocation failed,
- *         or any other error codes from the av_read_frame() or pkst_send_AVPacket_multiple_contexts() functions.
- * 
- * The function loops over the input stream, reading frames and sending them to multiple output contexts.
- * If a packet is not of the video or audio type, it is discarded. If a packet is of the video type, it is sent to 
- * all output contexts that handle video, and if it's of the audio type, it is sent to all output contexts that handle audio.
- * The function breaks out of the loop when an error is encountered in reading a frame or sending a packet to an output context.
- * 
- * Note: The function does not handle the case where the input stream is neither video nor audio, in such case, the packet is simply ignored.
-
-int pkst_audiovideo_remux(PKSTInputCtx *in, PKSTMultiOutCtx *out) {
-    AVStream *in_stream;
-    AVPacket *pkt = NULL;
-    int stream_type;
-    int ret;
-
-    if (!in || !out) return -1;
-
-    pkt = av_packet_alloc();
-    if (!pkt)
-        return -1;
-         
-    while (1) {
-        ret = av_read_frame(in->in_ctx, pkt);
-        if (ret < 0)
-            break;
-    
-        if (pkt->stream_index != in->streams[PKST_VIDEO_STREAM_OUTPUT] &&
-            pkt->stream_index != in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
-            av_packet_unref(pkt);
-            continue;
-        }
-        in_stream = in->in_ctx->streams[pkt->stream_index];
-        stream_type = pkt->stream_index == in->streams[PKST_VIDEO_STREAM_OUTPUT] ? PKST_VIDEO_STREAM_OUTPUT : PKST_AUDIO_STREAM_OUTPUT;
-        ret = pkst_send_AVPacket_multiple_contexts(pkt, in_stream->time_base, stream_type, out->ctx, out->ctx_len);
-        if (ret < 0)
-            break;
-    }
-    av_packet_free(&pkt);
-    return (ret == AVERROR_EOF) ? 0 : ret;
-}
-*/
 
 /**
  * @brief Reads a video or audio frame from the specified input context.
@@ -865,12 +723,12 @@ static int pkst_read_packet(PKSTInputCtx *in, AVPacket *pkt) {
  * @param out The output contexts where the processed packet(s) will be sent.
  * @return Returns 0 on success, or a negative error code on failure.
  */
-static int pkst_process_audio_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, PKSTStats *stats) {
+static int pkst_process_audio_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *fail) {
     AVStream *in_stream = in->in_ctx->streams[pkt->stream_index];
     int stream_type = PKST_AUDIO_STREAM_OUTPUT;
     int error;
 
-    stats->input_pkts++;
+    out->stats->input_pkts++;
 
     if (in->a_enc_ctx) {
         // Reencode
@@ -884,16 +742,16 @@ static int pkst_process_audio_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiO
             if (error < 0) {
                 return error;
             } else if (error > 0) {
-                error = pkst_send_AVPacket_multiple_contexts(pkt, in->a_enc_ctx->out_codec_ctx->time_base,stream_type,out->ctx,  out->ctx_len); // CAMBIAR BORRAR Remux
+                error = pkst_send_AVPacket_multiple_contexts(pkt, in->a_enc_ctx->out_codec_ctx->time_base,stream_type,out->ctx,  out->ctx_len, fail); // CAMBIAR BORRAR Remux
                 if (error <0) return error;
-                stats->output_pkts++;
+                out->stats->output_pkts++;
             } 
         }
     } else {
         //Remux
-        error = pkst_send_AVPacket_multiple_contexts(pkt, in_stream->time_base, stream_type, out->ctx, out->ctx_len);
+        error = pkst_send_AVPacket_multiple_contexts(pkt, in_stream->time_base, stream_type, out->ctx, out->ctx_len, fail);
         if (error <0) return error;
-        stats->output_pkts++;
+        out->stats->output_pkts++;
     }
     return 0;
 }
@@ -909,25 +767,25 @@ static int pkst_process_audio_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiO
  * @param out The multi-output context, which contains the output contexts for the packet
  * @return 0 if successful, an error code otherwise
  */
-static int pkst_process_video_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, PKSTStats *stats) {
+static int pkst_process_video_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *fail) {
     AVStream *in_stream = in->in_ctx->streams[pkt->stream_index];
     int stream_type = PKST_VIDEO_STREAM_OUTPUT;
     int error;
 
-    stats->input_pkts++;
+    out->stats->input_pkts++;
 
     if (in->v_enc_ctx) {
         // Nothing
     } else {;
-        error = pkst_send_AVPacket_multiple_contexts(pkt, in_stream->time_base, stream_type, out->ctx, out->ctx_len);
+        error = pkst_send_AVPacket_multiple_contexts(pkt, in_stream->time_base, stream_type, out->ctx, out->ctx_len, fail);
         if (error <0) return error;
-        stats->output_pkts++;
+        out->stats->output_pkts++;
     }
     return 0;
 }
 
 
-static int pkst_flush_audio_encoder_queue(PKSTInputCtx *in, PKSTMultiOutCtx *out) {
+int pkst_flush_audio_encoder_queue(PKSTInputCtx *in, PKSTMultiOutCtx *out) {
     int stream_type = PKST_AUDIO_STREAM_OUTPUT;
     AVPacket *pkt = NULL;
     int error = 0;
@@ -945,7 +803,7 @@ static int pkst_flush_audio_encoder_queue(PKSTInputCtx *in, PKSTMultiOutCtx *out
                                                              in->a_enc_ctx->out_codec_ctx->time_base,
                                                              stream_type, 
                                                              out->ctx, 
-                                                             out->ctx_len);
+                                                             out->ctx_len, NULL);
                 if (error <0) break;
             }
         }
@@ -967,18 +825,21 @@ static int pkst_flush_audio_encoder_queue(PKSTInputCtx *in, PKSTMultiOutCtx *out
  *       the function will decode the packet, convert the raw data, store it in a FIFO buffer for later encoding, and finally re-encode the audio into packets which are sent to the output contexts.
  *       If no re-encoding context is present, the function will simply send the audio packets to the output contexts.
  *       For video packets, they are directly sent to the output contexts without any decoding or re-encoding.
- */
+ 
 int pkst_audiovideo_process(PKSTInputCtx *in, PKSTMultiOutCtx *out, int socket) {
-    PKSTStats stats;
     char *msg = NULL;
     AVPacket *pkt = NULL;
     int error;
-    
+    int ofail;
+    time_t last_dump_time;
+
     if (!in || !out) return -1;
 
-    stats.input_pkts = 0;
-    stats.output_pkts = 0;
-    stats.start_time = time(NULL);
+    out->stats->input_pkts  = 0;
+    out->stats->output_pkts = 0;
+    out->stats->start_time  = time(NULL);
+    
+    last_dump_time = out->stats->start_time;
 
     pkt = av_packet_alloc();
     if (!pkt)
@@ -988,26 +849,29 @@ int pkst_audiovideo_process(PKSTInputCtx *in, PKSTMultiOutCtx *out, int socket) 
         error = pkst_read_packet(in, pkt);
         if (error < 0) break;
 
+        ofail = BOOL_FALSE;
+
         if (pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
-            error = pkst_process_audio_packet(pkt, in, out, &stats);
+            error = pkst_process_audio_packet(pkt, in, out, &ofail);
         } else {
-            error = pkst_process_video_packet(pkt, in, out, &stats);
+            error = pkst_process_video_packet(pkt, in, out, &ofail);
         }
 
         if (error < 0) goto cleanup;
 
-        stats.current_time = time(NULL);
+        out->stats->current_time = time(NULL);
 
-        if (difftime(stats.current_time, stats.start_time) >= 5) {            
-            if (socket) {
-                msg = pkst_stats_to_json(&stats);
-                if (pkst_send_data(socket, msg, MESSAGE_TYPE_JSON | MESSAGE_REPORT_STATS) < 0) 
-                    socket = 0;
-                free(msg);
-                msg = NULL;
-            } else {
-                pkts_print_stats(&stats);
-            }
+        if (difftime(out->stats->current_time, last_dump_time) >= 1.0 || ofail == BOOL_TRUE) {
+            dump_multi_out_ctx(out);          
+            last_dump_time = out->stats->current_time;
+        }
+
+        if (ofail && socket) {
+            msg = dump_multi_out_ctx_json(out, 0);
+            if (pkst_send_data(socket, msg, MESSAGE_REPORT_STATS) < 0) 
+                socket = 0;
+            free(msg);
+            msg = NULL;
         }
     }
 
@@ -1017,51 +881,120 @@ cleanup:
     av_packet_free(&pkt);
     return (error == AVERROR_EOF) ? 0 : error;
 }
+*/
 
+int pkst_process_av_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *output_fail) {
+    int error;
 
-char *pkst_out_report_to_json(const PKSTMultiOutCtx *report, int status) {
-    char error[AV_ERROR_MAX_STRING_SIZE] = {0};
-    PKSTOutProcCtx *ctx;
+    if (!(error = pkst_read_packet(in, pkt))) { 
+        if (pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
+            error = pkst_process_audio_packet(pkt, in, out, output_fail);
+        } else {
+            error = pkst_process_video_packet(pkt, in, out, output_fail);
+        }
+    }
+    return error;
+}
+
+void dump_multi_out_ctx(const PKSTMultiOutCtx *multi_out_ctx) {
+    int i;
+
+    if (!multi_out_ctx) return;
+
+    time_t current_time;
+    struct tm * local_time_info;
+    char time_str[26];  
+    
+
+    time(&current_time);
+    local_time_info = localtime(&current_time);
+
+    strftime(time_str, 26, "%Y-%m-%d %H:%M:%S", local_time_info);
+    pkst_log(NULL,0,"%s: [STATS] \n", time_str);
+
+    PKSTStats *stats = multi_out_ctx->stats;
+    double elapsed_time = difftime(stats->current_time, stats->start_time);
+    double diff_time = difftime(stats->current_time, stats->start_time);
+    double input_speed = diff_time > 0 ? stats->input_pkts / diff_time : 0;
+    double output_speed = diff_time > 0 ? stats->output_pkts / diff_time : 0;
+
+    for (i = 0; i < multi_out_ctx->ctx_len; i++) {
+        PKSTOutProcCtx *out_proc_ctx = multi_out_ctx->ctx[i];
+
+        // Obtain error string from av_strerror function
+        char error[AV_ERROR_MAX_STRING_SIZE] = {0};
+        if (out_proc_ctx->status != 0)
+            av_strerror(out_proc_ctx->status, error, AV_ERROR_MAX_STRING_SIZE);
+
+        pkst_log(NULL,0,"\t%d - Destination: %s\tStatus: %d\tIgnore Fail: %d\tError: %s\n", i,
+                out_proc_ctx->dst, 
+                out_proc_ctx->status, 
+                out_proc_ctx->onfail_ignore, 
+                error);
+    }
+    pkst_log(NULL,0,"\tInput packets: %8d, Speed: %8.2f packets/s, Output packets: %8d, Speed: %8.2f packets/s, Elapsed time: %8.2f s\n", 
+            stats->input_pkts, input_speed, stats->output_pkts, output_speed, elapsed_time);
+}
+
+char *dump_multi_out_ctx_json(const PKSTMultiOutCtx *multi_out_ctx, int error) {
+    int i;
+
+    if (!multi_out_ctx) return NULL;
+
+    time_t current_time;
+
+    time(&current_time);
+
+    PKSTStats *stats = multi_out_ctx->stats;
+    double elapsed_time = difftime(stats->current_time, stats->start_time);
+    double diff_time = difftime(stats->current_time, stats->start_time);
+    double input_speed = diff_time > 0 ? stats->input_pkts / diff_time : 0;
+    double output_speed = diff_time > 0 ? stats->output_pkts / diff_time : 0;
+
+    // Create a new json object
     json_t *jobj = json_object();
+
+    // Add current time
+    json_object_set_new(jobj, "timestamp", json_integer((long int)current_time));
+
+    // Add stats
     json_t *jarray = json_array();
-    json_t *jctx;
-    char *result = NULL;
 
-    // Asegúrate de comprobar que report no es NULL antes de acceder a sus miembros
-    if (report) {
-        // Convertir el código de estado a un mensaje de error
-        if (av_strerror(status, error, sizeof(error)) < 0) {
-            sprintf(error, "Unrecognized error code: %d", status);
-        }
+    for (i = 0; i < multi_out_ctx->ctx_len; i++) {
+        PKSTOutProcCtx *out_proc_ctx = multi_out_ctx->ctx[i];
 
-        // Establecer campos de nivel raíz
-        json_object_set_new(jobj, "status", json_integer(status));
-        json_object_set_new(jobj, "error", json_string(error));
+        // Obtain error string from av_strerror function
+        char error[AV_ERROR_MAX_STRING_SIZE] = {0};
+        if (out_proc_ctx->status != 0)
+            av_strerror(out_proc_ctx->status, error, AV_ERROR_MAX_STRING_SIZE);
 
-        for (int i = 0; i < report->ctx_len; i++) {
-            ctx = report->ctx[i];
+        // Create a new json object for each context
+        json_t *jctx = json_object();
+        json_object_set_new(jctx, "destination", json_string(out_proc_ctx->dst));
+        json_object_set_new(jctx, "status", json_integer(out_proc_ctx->status));
+        json_object_set_new(jctx, "ignore_fail", json_boolean(out_proc_ctx->onfail_ignore));
+        json_object_set_new(jctx, "error", json_string(error));
 
-            if (ctx) {
-                jctx = json_object();
-                json_object_set_new(jctx, "dst", json_string(ctx->dst));
-                json_object_set_new(jctx, "status", json_integer(ctx->status));
-                json_object_set_new(jctx, "onfail_ignore", json_integer(ctx->onfail_ignore));
-
-                if (av_strerror(ctx->status, error, AV_ERROR_MAX_STRING_SIZE) < 0) {
-                    sprintf(error, "Unrecognized error code: %d", ctx->status);
-                }
-                json_object_set_new(jctx, "error", json_string(error));
-
-                json_array_append_new(jarray, jctx);
-            }
-        }
-        json_object_set_new(jobj, "OutputReport", jarray);
+        // Add the context to the array
+        json_array_append_new(jarray, jctx);
     }
 
-    result = json_dumps(jobj, JSON_ENCODE_ANY);
+    // Add the array of contexts to the main object
+    json_object_set_new(jobj, "outputs", jarray);
 
-    // Libera la memoria del objeto JSON
+    // Add speed and elapsed time to the main object
+    json_object_set_new(jobj, "error", json_integer(error));
+    json_object_set_new(jobj, "input_packets", json_integer(stats->input_pkts));
+    json_object_set_new(jobj, "input_Speed", json_real(input_speed));
+    json_object_set_new(jobj, "output_packets", json_integer(stats->output_pkts));
+    json_object_set_new(jobj, "output_Speed", json_real(output_speed));
+    json_object_set_new(jobj, "eta", json_real(elapsed_time));
+
+    // Dump the json object to a string
+    char *json_str = json_dumps(jobj, JSON_ENCODE_ANY);
+
+    // Decrease the reference count to the json object because we don't need it anymore
     json_decref(jobj);
 
-    return result;
+    return json_str;
 }

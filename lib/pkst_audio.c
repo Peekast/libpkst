@@ -575,20 +575,20 @@ cleanup:
  * The function does not check if the structure itself is NULL.
  * After this function is called, all the pointers in the structure will be invalid.
  */
-void pkst_cleanup_decoder_encoder(PKSTAudioEncode *ctx) {
-    if (ctx) {
-        if(ctx->fifo)
-            av_audio_fifo_free(ctx->fifo);
-        if(ctx->resample_ctx)
-            swr_free(&(ctx->resample_ctx));
-        if(ctx->out_codec_ctx)
-            avcodec_free_context(&(ctx->out_codec_ctx));
-        if(ctx->in_codec_ctx)
-            avcodec_free_context(&(ctx->in_codec_ctx));
-        free(ctx);
+void pkst_cleanup_decoder_encoder(PKSTAudioEncode **ctx) {
+    if (ctx && *ctx) {
+        if((*ctx)->fifo)
+            av_audio_fifo_free((*ctx)->fifo);
+        if((*ctx)->resample_ctx)
+            swr_free(&((*ctx)->resample_ctx));
+        if((*ctx)->out_codec_ctx)
+            avcodec_free_context(&((*ctx)->out_codec_ctx));
+        if((*ctx)->in_codec_ctx)
+            avcodec_free_context(&((*ctx)->in_codec_ctx));
+        free(*ctx);
+        *ctx = NULL;  
     }
 }
-
 
 /**
  * @brief Open and initialize an audio encoder and decoder using an input AVStream.
@@ -631,7 +631,7 @@ int pkst_open_audio_decoder_encoder(const AVStream *in_audio_stream, const PKSTA
     *ed_ctx = ctx;
     return 0;
 cleanup:
-    pkst_cleanup_decoder_encoder(ctx);
+    pkst_cleanup_decoder_encoder(&ctx);
     return error;
 }
 

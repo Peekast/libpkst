@@ -8,7 +8,7 @@ CFLAGS = -g -Wall -fPIC -I/opt/homebrew/Cellar/ffmpeg/5.1.2/include
 LIBRARY = libpkst.so
 
 # Define los archivos fuente
-SOURCES = pkst_iocontext.c pkst_audio.c netutils.c keyvalue.c pkst_mediainfo.c pkst_string.c pkst_stats.c pkst_routine.c pkst_msgproto.c
+SOURCES = pkst_iocontext.c pkst_audio.c netutils.c keyvalue.c pkst_mediainfo.c pkst_log.c pkst_string.c pkst_routine.c pkst_msgproto.c pkst_iobuffer.c
 
 LDFLAGS = -L/opt/homebrew/Cellar/ffmpeg/5.1.2/lib -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale -ljansson
 # Define los archivos de objeto
@@ -24,3 +24,6 @@ $(LIBRARY): $(OBJECTS)
 
 clean:
 	rm -f $(LIBRARY) $(OBJECTS)
+
+install:
+	cp libpkst.so /usr/local/lib/

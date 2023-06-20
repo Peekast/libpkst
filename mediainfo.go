@@ -1,59 +1,51 @@
-package pkstenc
+package pkst
 
 /*
-#cgo CFLAGS: -I.
-#cgo LDFLAGS: -lpkstenc
-#include "lib/pkst_mediainfo.h"
+#cgo CFLAGS: -I./lib
+#cgo LDFLAGS: -lpkst
+
+#include "pkst_mediainfo.h"
 
 */
 import "C"
+
 import (
-	"fmt"
+	"encoding/json"
+	"unsafe"
 )
 
 type MediaInfo struct {
-	Format           string
-	Duration         float64
-	VideoCodec       string
-	AudioCodec       string
-	Width            int
-	Height           int
-	VideoBitrateKbps int
-	AudioBitrateKbps int
-	FPS              float64
-	AudioChannels    int
-	SampleRate       int
+	Format           string  `json:"format"`
+	Duration         float64 `json:"duration"`
+	VideoCodec       string  `json:"video_codec"`
+	AudioCodec       string  `json:"audio_codec"`
+	VideoIndex       int     `json:"video_index"`
+	AudioIndex       int     `json:"audio_index"`
+	Width            int     `json:"width"`
+	Height           int     `json:"height"`
+	VideoBitrateKbps int     `json:"video_bitrate_kbps"`
+	AudioBitrateKbps int     `json:"audio_bitrate_kbps"`
+	FPS              float64 `json:"fps"`
+	AudioChannels    int     `json:"audio_channels"`
+	SampleRate       int     `json:"sample_rate"`
 }
 
-func convertToGoMediaInfo(cInfo *C.PKSTMediaInfo) MediaInfo {
-	return MediaInfo{
-		Format:           C.GoString(cInfo.format),
-		Duration:         float64(cInfo.duration),
-		VideoCodec:       C.GoString(cInfo.video_codec),
-		AudioCodec:       C.GoString(cInfo.audio_codec),
-		Width:            int(cInfo.width),
-		Height:           int(cInfo.height),
-		VideoBitrateKbps: int(cInfo.video_bitrate_kbps),
-		AudioBitrateKbps: int(cInfo.audio_bitrate_kbps),
-		FPS:              float64(cInfo.fps),
-		AudioChannels:    int(cInfo.audio_channels),
-		SampleRate:       int(cInfo.sample_rate),
+func ParseMediaInfo(data []byte) (*MediaInfo, error) {
+	var info MediaInfo
+	err := json.Unmarshal(data, &info)
+	if err != nil {
+		return nil, err
 	}
+	return &info, nil
 }
 
-func GetMediaInfoFromFile(filename string) (*MediaInfo, error) {
-	var mi MediaInfo
-	format := C.PKSTMediaInfo{}
+func ExtractDurationFromBuffer(buffer []byte) float64 {
+	// Get an unsafe pointer to the start of the byte slice.
+	cBuf := (*C.char)(unsafe.Pointer(&buffer[0]))
 
-	retval := C.pkst_extract_mediainfo_from_file(C.CString(filename), &format)
-	if retval == 0 {
-		defer C.pkst_free_mediainfo(&format)
-		mi = convertToGoMediaInfo(&format)
-		return &mi, nil
-	}
-	var cerr *C.char
-	C.pkst_get_error(retval, &cerr)
-	err := fmt.Errorf(C.GoString(cerr))
-	C.pkst_free_error(&cerr)
-	return nil, err
+	// Call the C function.
+	cDuration := C.pkst_extract_duration_from_buffer(cBuf, C.size_t(len(buffer)))
+
+	// Convert the C double to a Go float64 and return it.
+	return float64(cDuration)
 }

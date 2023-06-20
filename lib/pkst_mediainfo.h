@@ -25,15 +25,17 @@ typedef struct {
 
 
 // Declaration of a function that extracts media info from a file. 
-extern int pkst_extract_mediainfo_from_file(const char *filename, PKSTMediaInfo *mi);
+extern int pkst_extract_mediainfo_from_file(const char *filename, PKSTMediaInfo **mi);
 
 // Declaration of a function that extracts media info from a memory buffer.
-extern int pkst_extract_mediainfo_from_mem(const char *buffer, size_t buff_len, PKSTMediaInfo *mi);
+extern double pkst_extract_duration_from_buffer(char *buffer, size_t buf_len);
 
-extern int pkst_extract_mediainfo_from_AVFormatContext(AVFormatContext *pFormatContext, PKSTMediaInfo *mi);
+extern double pkst_extract_duration_from_AVFormatContext(AVFormatContext *pFormatContext);
+
+extern int pkst_extract_mediainfo_from_AVFormatContext(AVFormatContext *pFormatContext, PKSTMediaInfo **mi);
 
 // Declaration of a function that frees a CEMediaInfo internal alloc memory.
-extern void pkst_free_mediainfo(PKSTMediaInfo *mi);
+extern void pkst_free_mediainfo(PKSTMediaInfo **mi);
 
 extern void pkst_get_error(int err, char **error);
 
