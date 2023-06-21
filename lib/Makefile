@@ -1,7 +1,7 @@
 # Definir el compilador
 CC = gcc
-CFLAGS = -fPIC -Wall -g `pkg-config --cflags libavcodec libavdevice libavfilter libavformat libavutil libpostproc libswresample libswscale jansson`
-LDFLAGS = `pkg-config --libs libavcodec libavdevice libavfilter libavformat libavutil libpostproc libswresample libswscale jansson`
+CFLAGS = -fPIC -Wall -g `pkg-config --cflags libavcodec libavdevice libavfilter libavformat libavutil libswresample libswscale jansson`
+LDFLAGS = `pkg-config --libs libavcodec libavdevice libavfilter libavformat libavutil libswresample libswscale jansson`
 
 # Definir las banderas del compilador
 #CFLAGS = -g -Wall -fPIC -I/opt/homebrew/Cellar/ffmpeg/5.1.2/include
