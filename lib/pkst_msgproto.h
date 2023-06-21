@@ -7,7 +7,7 @@
 #define MESSAGE_REPORT_END        0x40  /* Out report */
 
 #include <sys/types.h>
-
+#include <stdint.h>
 #include "pkst_defines.h"
 
 #pragma pack(push, 1)
