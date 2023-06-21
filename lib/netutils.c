@@ -82,7 +82,7 @@ int connect_tcp(const char *url) {
 
 #ifdef __linux__
     flags = 1;
-    if ((ret = ioctl(sockfd, FIONBIO, &nonblocking) < 0)) {
+    if ((ret = ioctl(sockfd, FIONBIO, &flags) < 0)) {
         close(sockfd);
         return ret;
     }
