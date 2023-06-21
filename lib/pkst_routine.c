@@ -64,7 +64,18 @@ static int handle_audio_encoding(PKSTEncoderConfig *config, PKSTInputCtx *ctx, P
 }
 
 
-
+/**
+ * This function represents the main routine for the encoder thread. It takes care of setting up 
+ * the input and output contexts, extracting media information, handling audio encoding, and 
+ * processing the AV packets, among other tasks. It also handles potential errors and takes care 
+ * of the cleanup process. 
+ * 
+ * @param void_argument A pointer to a PKSTRoutineArg structure containing the encoder configuration and a flag 
+ *                      indicating whether to exit the routine.
+ * 
+ * @return A pointer to an integer that holds the result of the encoding process. This is dynamically allocated 
+ *         and must be freed by the caller.
+ */
 static void *pkst_encoder_routine(void *void_argument) {
     PKSTMultiOutCtx *out = NULL;
     PKSTRoutineArg *arg  = void_argument;
@@ -167,7 +178,17 @@ exit:
     return return_value; 
 }
 
-
+/**
+ * This function starts the encoder routine in a new thread. It prepares the arguments, 
+ * initializes the necessary structures and starts the thread with the encoding routine.
+ *
+ * @param config Pointer to the PKSTEncoderConfig structure containing the encoder configuration.
+ * @param routine Address of a pointer to a PKSTRoutine structure. The function will allocate memory for this structure
+ *                and store the address of the new memory in the provided pointer. The caller is responsible for freeing this memory.
+ *
+ * @return Zero on successful thread creation, or a non-zero error code on failure. In the case of a memory allocation error, 
+ *         it returns the AVERROR(ENOMEM) error code. In the case of a pthread creation error, it returns the error code returned by pthread_create.
+ */
 int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine) {    
     int error;
     PKSTRoutineArg *arg = malloc(sizeof(PKSTRoutineArg));
@@ -191,11 +212,39 @@ int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine
     return 0;
 }  
 
+/**
+ * This function is used to cancel an ongoing PKSTRoutine.
+ * It uses atomic operations to ensure thread safety.
+ *
+ * @param routine A pointer to the PKSTRoutine to be canceled.
+ * This should have been previously initialized and started.
+ *
+ * When this function is called, it sets the 'should_exit' flag
+ * of the routine to 1, signaling to the routine that it should
+ * terminate as soon as possible.
+ */
 void pkst_cancel_routine(PKSTRoutine *routine) {
     atomic_store(&(routine->should_exit), 1);
 }
 
-
+/**
+ * This function is used to wait for a PKSTRoutine to finish executing.
+ * It is a blocking function, meaning it will not return until the PKSTRoutine 
+ * has finished execution or an error occurs.
+ *
+ * @param routine A double pointer to the PKSTRoutine to wait on.
+ * This should have been previously initialized and started.
+ *
+ * @param ret A pointer to a location where the exit status of the routine 
+ * will be stored. If the routine has been canceled, the exit status will 
+ * be PTHREAD_CANCELED.
+ *
+ * @return 0 if the routine successfully joined; otherwise, it will return an error code.
+ *
+ * After the routine has finished and has been joined, this function 
+ * will also free the memory associated with the PKSTRoutine and set the pointer 
+ * to NULL to prevent dangling pointers.
+ */
 int pkst_wait_routine(PKSTRoutine **routine, void *ret) {
     int error;
     if (routine && *routine) {
