@@ -2,54 +2,37 @@ package main
 
 import (
 	"fmt"
+	//	pkst "libpkst"
 	pkst "libpkstenc"
 )
 
 func main() {
 
-	encoder, err := pkst.AllocEncoderConfig("tcp://192.168.0.210:2000", true, 50, "")
-	if err != nil {
-		fmt.Println(err)
-		return
+	encoderConfig := pkst.EncoderConfig{
+		In:      "input_source", // reemplaza "input_source" por la fuente de entrada real
+		Listen:  true,           // asumiremos que el codificador debe escuchar las conexiones
+		Timeout: 30,             // establece un período de tiempo de espera, por ejemplo, 30
+		InType:  "input_type",   // reemplaza "input_type" por el tipo de entrada real
+		Audio: &pkst.AudioConfig{
+			Codec:      "audio_codec", // reemplaza "audio_codec" por el codec de audio real
+			BitRate:    128,           // por ejemplo, 128
+			SampleRate: 44100,         // por ejemplo, 44100
+			Channels:   2,             // por ejemplo, 2
+		},
+		Outputs: [4]*pkst.EncoderOutput{
+			{
+				Dst:        "output1_dst",  // reemplaza "output1_dst" por el destino de la salida real
+				Type:       "output1_type", // reemplaza "output1_type" por el tipo de salida real
+				KVOpts:     "output1_opts", // reemplaza "output1_opts" por las opciones adicionales
+				IgnoreFail: true,           // asumiremos que se deben ignorar los fallos
+			},
+			// Hacer lo mismo para las salidas adicionales si son necesarias
+			nil,
+			nil,
+			nil,
+		},
 	}
 
-	err = encoder.AddAudioEncoderConfig("aac", 128000, 2, 44100)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	err = encoder.AddOutputConfig("rtmp://a.rtmp.youtube.com/live2/y2uc-axv6-erww-rus9-agfq", "flv", "flvflags=no_duration_filesize", false)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	encoder.AddOutputConfig("video.m3u8", "hls", "hls_segment_type=mpegts&hls_playlist_type=event&hls_segment_filename=tcp://127.0.1.1:2000/video_%02d.ts", true)
-	encoder.DumpEncoderConfig()
-	err = encoder.Start()
-	if err == nil {
-		for {
-			data, ok := <-encoder.Chan
-			if ok {
-				switch v := data.(type) {
-				case *int:
-					fmt.Println("Encoder return code: ", *v)
-				case *pkst.MediaInfo:
-					fmt.Println("Input Data: ", v)
-				case *pkst.Stats:
-					fmt.Println("End: ", v)
-				}
-			} else {
-				break
-			}
-		}
-	}
-
-	/*
-		file, _ := os.Open("video_03.ts")
-		buf, _ := io.ReadAll(file)
-		duration := pkst.ExtractDurationFromBuffer(buf)
-		fmt.Println(duration)
-	*/
+	encoder, err := pkst.NewEncoder(&encoderConfig)
+	fmt.Println(encoder, err)
 }
