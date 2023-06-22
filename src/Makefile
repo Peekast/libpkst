@@ -25,3 +25,4 @@ clean:
 
 install:
 	cp libpkst.so /usr/local/lib/
+	mkdir -p /usr/local/include/libpkst && cp *.h /usr/local/include/libpkst/
