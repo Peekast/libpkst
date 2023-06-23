@@ -5,3 +5,11 @@ lib/main
 lib/main.c
 src/_main.c
 .DS_Store
+src/libavcodec.a
+src/libavdevice.a
+src/libavfilter.a
+src/libavformat.a
+src/libavutil.a
+src/libpostproc.a
+src/libswresample.a
+src/libswscale.a
