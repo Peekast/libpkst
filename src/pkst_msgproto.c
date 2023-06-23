@@ -7,7 +7,7 @@
 
 int pkst_send_msg(int socket, PKSTMgsProto *hdr, const char *msg_body) {
     int n, len = strlen(msg_body) + 1 + sizeof(PKSTMgsProto);
-    char *buffer = malloc(len);
+    char *buffer = calloc(1,len);
     if (!buffer) {
         return -1;
     }

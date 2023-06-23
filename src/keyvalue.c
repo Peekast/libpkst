@@ -39,14 +39,14 @@ KeyValueList* parse_kv_list(const char *kv_str, char pair_delim, char kv_delim) 
     if (!kv_str)
         return NULL;
 
-    kv_list = malloc(sizeof(KeyValueList));
+    kv_list = calloc(1,sizeof(KeyValueList));
     if (!kv_list) {
         free(tmp_kv_str);
         return NULL;
     }
 
     kv_list->count = count_char(kv_str, pair_delim) + 1;
-    kv_list->items = malloc(kv_list->count * sizeof(KeyValue));
+    kv_list->items = calloc(1,kv_list->count * sizeof(KeyValue));
 
     if (!kv_list->items) {
         free(kv_list);
@@ -72,7 +72,7 @@ KeyValueList* parse_kv_list(const char *kv_str, char pair_delim, char kv_delim) 
 int add_to_kv_list(KeyValueList **kv_list, const char *key, const char *value) {
     KeyValue* new_items;
     if (!(*kv_list)) {
-        *kv_list = malloc(sizeof(KeyValueList));
+        *kv_list = calloc(1,sizeof(KeyValueList));
         if (!(kv_list))
             return -1;
 
@@ -107,7 +107,7 @@ char* serialize_kv_list(const KeyValueList* kv_list, char pair_delim, char kv_de
     }
 
     // Reserva memoria para la cadena.
-    char* buffer = malloc(buffer_size);
+    char* buffer = calloc(1,buffer_size);
     if (buffer == NULL) {
         return NULL; // Error al reservar memoria
     }

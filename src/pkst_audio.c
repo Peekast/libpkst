@@ -606,7 +606,7 @@ void pkst_cleanup_decoder_encoder(PKSTAudioEncode **ctx) {
  * The caller is responsible for eventually freeing the PKSTAudioEncode structure using pkst_cleanup_encoder_decoder().
  */
 int pkst_open_audio_decoder_encoder(const AVStream *in_audio_stream, const PKSTAudioConfig *config, PKSTAudioEncode **ed_ctx) {
-    PKSTAudioEncode *ctx = malloc(sizeof(PKSTAudioEncode));
+    PKSTAudioEncode *ctx = calloc(1,sizeof(PKSTAudioEncode));
     int error;
     
     if (!ctx)
@@ -619,6 +619,7 @@ int pkst_open_audio_decoder_encoder(const AVStream *in_audio_stream, const PKSTA
         
     error = pkst_open_audio_encoder(&(ctx->out_codec_ctx), config);
     if (error < 0) goto cleanup;
+
 
     error = pkst_init_resampler(ctx->in_codec_ctx, ctx->out_codec_ctx, &(ctx->resample_ctx));
     if (error < 0) goto cleanup;

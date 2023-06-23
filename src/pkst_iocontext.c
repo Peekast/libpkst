@@ -26,7 +26,7 @@
  */
 int pkst_alloc_encoder_config(PKSTEncoderConfig **enc, char *in, int listen, int timeout, char *in_type, char *tcpstats) {
     // Allocate memory for the new PKSTEncoderConfig structure
-    PKSTEncoderConfig *new_enc = malloc(sizeof(PKSTEncoderConfig));
+    PKSTEncoderConfig *new_enc = calloc(1,sizeof(PKSTEncoderConfig));
     // If allocation fails, return -1
     if (new_enc == NULL) {
         return -1; 
@@ -83,7 +83,7 @@ int pkst_add_output_encoder_config(PKSTEncoderConfig *enc, PKSTOutputConfig *out
         return -1;
 
     // Allocate memory for the new output context. If allocation fails, return error.
-    ctx = malloc(sizeof(PKSTOutputConfig));
+    ctx = calloc(1,sizeof(PKSTOutputConfig));
     if (!ctx)
         return -1;
 
@@ -129,7 +129,7 @@ int pkst_add_audio_encoder_config(PKSTEncoderConfig *enc, PKSTAudioConfig *confi
     if (!enc || !config)
         return -1; // Retornar algún código de error o hacer un manejo de errores adecuado.
 
-    enc->audio_config = malloc(sizeof(PKSTAudioConfig));
+    enc->audio_config = calloc(1,sizeof(PKSTAudioConfig));
     if (!enc->audio_config)
         return -1; // Error en la asignación de memoria.
 
@@ -311,7 +311,7 @@ int pkst_open_input_context(PKSTEncoderConfig *config, PKSTInputCtx **ctx) {
         if (!infmt) return -1;
     }
 
-    *ctx = malloc(sizeof(PKSTInputCtx));
+    *ctx = calloc(1,sizeof(PKSTInputCtx));
     if (*ctx == NULL) return -1;
 
     (*ctx)->streams[PKST_AUDIO_STREAM_OUTPUT] = -1;
@@ -494,12 +494,12 @@ int pkst_open_multiple_ouputs_context(PKSTEncoderConfig *config, PKSTInputCtx *i
    int aindex;
    int i; //, j;
 
-    *out_ctx = malloc(sizeof(PKSTMultiOutCtx));
+    *out_ctx = calloc(1,sizeof(PKSTMultiOutCtx));
     memset(*out_ctx, 0, sizeof(PKSTMultiOutCtx));
 
     if (*out_ctx == NULL) return -1;
 
-    (*out_ctx)->stats = malloc(sizeof(PKSTStats));
+    (*out_ctx)->stats = calloc(1,sizeof(PKSTStats));
     if (!(*out_ctx)->stats) return -1;
 
 
@@ -534,7 +534,7 @@ int pkst_open_multiple_ouputs_context(PKSTEncoderConfig *config, PKSTInputCtx *i
 
     for ( i = 0; i < config->outs_len; i++) {
 
-        ctx_p = malloc(sizeof(PKSTOutProcCtx));
+        ctx_p = calloc(1,sizeof(PKSTOutProcCtx));
         if (!ctx_p) goto cleanup;
 
         ctx_p->out_ctx = pkst_open_output_context(config->outs[i], streams, encoder);
