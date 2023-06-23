@@ -4,3 +4,4 @@ lib/.DS_Store
 lib/main
 lib/main.c
 src/_main.c
+.DS_Store
