@@ -202,6 +202,8 @@ int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine
 
     atomic_store(arg->should_exit, 0);
 
+
+
     if((error = pthread_create(&((*routine)->routine), NULL, pkst_encoder_routine, arg))) {
         free(*routine); // No olvides liberar la memoria en caso de error.
         free(arg);

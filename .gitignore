@@ -13,3 +13,4 @@ src/libavutil.a
 src/libpostproc.a
 src/libswresample.a
 src/libswscale.a
+src/main

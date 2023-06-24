@@ -4,11 +4,15 @@
 #include <string.h>
 
 #include <libavutil/log.h>
+#include <pthread.h>
 
 #include "pkst_log.h"
 
 void pkst_log_callback(void* ptr, int level, const char* fmt, va_list vl) {
+    pthread_t id;
     if (level <= av_log_get_level()) {
+        id = pthread_self();
+        
         time_t current_time;
         char* c_time_string;
         
@@ -19,7 +23,7 @@ void pkst_log_callback(void* ptr, int level, const char* fmt, va_list vl) {
             *pos = '\0';
         }
         /* Note that ctime() has already added a terminating newline character */
-        fprintf(logFile, "[%s] ", c_time_string);
+        fprintf(logFile, "[%s] pthread: %lx - ", c_time_string, (unsigned long) id);
         vfprintf(logFile, fmt, vl);
     }
 }
