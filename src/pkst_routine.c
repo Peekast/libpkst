@@ -149,8 +149,6 @@ static void *pkst_encoder_routine(void *void_argument) {
             free(msg);
             msg = NULL;
         }
-
-
     }   
 
     if (in->a_enc_ctx)
@@ -173,8 +171,8 @@ cleanup:
     avformat_network_deinit();
     // Enviar tcp si corresponde
 exit:
-    free(void_argument);
     *return_value = error;
+    free(void_argument);
     return return_value; 
 }
 
@@ -201,8 +199,6 @@ int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine
     arg->should_exit = &((*routine)->should_exit);
 
     atomic_store(arg->should_exit, 0);
-
-
 
     if((error = pthread_create(&((*routine)->routine), NULL, pkst_encoder_routine, arg))) {
         free(*routine); // No olvides liberar la memoria en caso de error.

@@ -552,23 +552,7 @@ int pkst_open_multiple_ouputs_context(PKSTEncoderConfig *config, PKSTInputCtx *i
 cleanup:
     (*out_ctx)->ctx_len = i;
     pkst_close_outputs_contexts(out_ctx);
-/*
-    for (j = 0; j < i; j++) {
-        if ((*out_ctx)->ctx[j]) {
-            if ((*out_ctx)->ctx[j]->dst)
-                free((*out_ctx)->ctx[j]->dst);
-            if ((*out_ctx)->ctx[j]->out_ctx) {
-                if (!((*out_ctx)->ctx[j]->out_ctx->oformat->flags & AVFMT_NOFILE)) {
-                    avio_closep(&((*out_ctx)->ctx[j]->out_ctx->pb));
-                }
-                avformat_free_context((*out_ctx)->ctx[j]->out_ctx);
-            }
-            free((*out_ctx)->ctx[j]);
-        }
-    }
-    free(*out_ctx);
-    *out_ctx = NULL;
-*/
+
     return -1;
 }
 
@@ -811,77 +795,6 @@ int pkst_flush_audio_encoder_queue(PKSTInputCtx *in, PKSTMultiOutCtx *out) {
     av_packet_free(&pkt);
     return error;
 }
-
-/**
- * @brief This function reads packets from the input context, decodes them, re-encodes (if required), and sends them to multiple output contexts.
- *
- * @param *in This is a pointer to the input context, which includes the AVFormatContext for the input file and other related information.
- * @param *out This is a pointer to the multiple output contexts, each containing the AVFormatContext for an output file and other related information.
- *
- * @return 0 on successful completion of the function. If the function encounters AVERROR_EOF, it implies the end of the input file has been reached, and thus it also returns 0. 
- *         For other error codes, it returns the corresponding FFmpeg error code.
- * 
- * @note This function will ignore packets that are not audio or video packets. In the case of audio packets, if a re-encoding context is present in the input context,
- *       the function will decode the packet, convert the raw data, store it in a FIFO buffer for later encoding, and finally re-encode the audio into packets which are sent to the output contexts.
- *       If no re-encoding context is present, the function will simply send the audio packets to the output contexts.
- *       For video packets, they are directly sent to the output contexts without any decoding or re-encoding.
- 
-int pkst_audiovideo_process(PKSTInputCtx *in, PKSTMultiOutCtx *out, int socket) {
-    char *msg = NULL;
-    AVPacket *pkt = NULL;
-    int error;
-    int ofail;
-    time_t last_dump_time;
-
-    if (!in || !out) return -1;
-
-    out->stats->input_pkts  = 0;
-    out->stats->output_pkts = 0;
-    out->stats->start_time  = time(NULL);
-    
-    last_dump_time = out->stats->start_time;
-
-    pkt = av_packet_alloc();
-    if (!pkt)
-        return AVERROR(ENOMEM);
-
-    while (1) {
-        error = pkst_read_packet(in, pkt);
-        if (error < 0) break;
-
-        ofail = BOOL_FALSE;
-
-        if (pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
-            error = pkst_process_audio_packet(pkt, in, out, &ofail);
-        } else {
-            error = pkst_process_video_packet(pkt, in, out, &ofail);
-        }
-
-        if (error < 0) goto cleanup;
-
-        out->stats->current_time = time(NULL);
-
-        if (difftime(out->stats->current_time, last_dump_time) >= 1.0 || ofail == BOOL_TRUE) {
-            dump_multi_out_ctx(out);          
-            last_dump_time = out->stats->current_time;
-        }
-
-        if (ofail && socket) {
-            msg = dump_multi_out_ctx_json(out, 0);
-            if (pkst_send_data(socket, msg, MESSAGE_REPORT_STATS) < 0) 
-                socket = 0;
-            free(msg);
-            msg = NULL;
-        }
-    }
-
-    if (in->a_enc_ctx)
-        error = pkst_flush_audio_encoder_queue(in, out);
-cleanup:    
-    av_packet_free(&pkt);
-    return (error == AVERROR_EOF) ? 0 : error;
-}
-*/
 
 int pkst_process_av_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *output_fail) {
     int error;
