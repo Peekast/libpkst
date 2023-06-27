@@ -14,3 +14,4 @@ src/libpostproc.a
 src/libswresample.a
 src/libswscale.a
 src/main
+.DS_Store
