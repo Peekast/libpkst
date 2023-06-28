@@ -35,4 +35,10 @@ extern int pkst_wait_routine(PKSTRoutine **routine, void *ret);
 
 // Declaration of function to cancel a routine. It takes a PKSTRoutine struct.
 extern void pkst_cancel_routine(PKSTRoutine *routine);
+
+// Init loggin and Network
+extern void pkst_init();
+
+// De init network
+extern void pkst_deinit();
 #endif

@@ -16,9 +16,13 @@
 #include "netutils.h"
 
 
-static void init_network_and_logging() {
+void pkst_init() {
     avformat_network_init();
     av_log_set_callback(pkst_log_callback);
+}
+
+void pkst_deinit() {
+    avformat_network_deinit();
 }
 
 static int setup_tcp_connection(PKSTEncoderConfig *config) {
@@ -94,8 +98,6 @@ static void *pkst_encoder_routine(void *void_argument) {
         goto exit;
     }
 
-    init_network_and_logging();
-
     if ((socket = setup_tcp_connection(arg->config)) < 0) {
         error = socket;
         goto cleanup;
@@ -168,7 +170,7 @@ cleanup:
 
     pkst_close_input_context(&in);
 
-    avformat_network_deinit();
+//    avformat_network_deinit();
     // Enviar tcp si corresponde
 exit:
     *return_value = error;
