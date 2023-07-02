@@ -1,4 +1,5 @@
 #include "pkst_audio.h"
+#include "pkst_strings.h"
 
 /**
  * @brief Open an audio decoder using an input AVStream.
@@ -606,7 +607,7 @@ void pkst_cleanup_decoder_encoder(PKSTAudioEncode **ctx) {
  * The caller is responsible for eventually freeing the PKSTAudioEncode structure using pkst_cleanup_encoder_decoder().
  */
 int pkst_open_audio_decoder_encoder(const AVStream *in_audio_stream, const PKSTAudioConfig *config, PKSTAudioEncode **ed_ctx) {
-    PKSTAudioEncode *ctx = calloc(1,sizeof(PKSTAudioEncode));
+    PKSTAudioEncode *ctx = pkst_alloc(sizeof(PKSTAudioEncode));
     int error;
     
     if (!ctx)

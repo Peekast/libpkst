@@ -9,6 +9,7 @@
 #include "pkst_audio.h"
 #include "pkst_routine.h"
 #include "pkst_msgproto.h"
+#include "pkst_strings.h"
 #include "pkst_log.h"
 #include <unistd.h>
 #include <libavformat/avformat.h>
@@ -89,7 +90,7 @@ static void *pkst_encoder_routine(void *void_argument) {
     time_t last_dump_time;
     int socket = 0;
     int error  = 0;
-    int *return_value = calloc(1,sizeof(int));
+    int *return_value = pkst_alloc(sizeof(int));
     int output_fail;
 
     pkt = av_packet_alloc();
@@ -191,8 +192,8 @@ exit:
  */
 int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine) {    
     int error;
-    PKSTRoutineArg *arg = calloc(1,sizeof(PKSTRoutineArg));
-    *routine = calloc(1,sizeof(PKSTRoutine));
+    PKSTRoutineArg *arg = pkst_alloc(sizeof(PKSTRoutineArg));
+    *routine = pkst_alloc(sizeof(PKSTRoutine));
 
     if (!*routine || !arg)
         return AVERROR(ENOMEM);

@@ -3,11 +3,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include "pkst_msgproto.h"
-
+#include "pkst_strings.h"
 
 int pkst_send_msg(int socket, PKSTMgsProto *hdr, const char *msg_body) {
     int n, len = strlen(msg_body) + 1 + sizeof(PKSTMgsProto);
-    char *buffer = calloc(1,len);
+    char *buffer = pkst_alloc(len);
     if (!buffer) {
         return -1;
     }

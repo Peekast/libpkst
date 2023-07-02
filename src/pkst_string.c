@@ -10,3 +10,6 @@ char *pkst_strdup(const char *s) {
     return d;                          // Devuelve la nueva cadena
 }
 
+void *pkst_alloc(size_t len) {
+    return calloc(1, len);
+}

@@ -3,4 +3,6 @@
 
 extern char *pkst_strdup(const char *s);
 
+extern void *pkst_alloc(size_t len);
+
 #endif

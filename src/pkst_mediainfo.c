@@ -69,11 +69,11 @@ int pkst_extract_mediainfo_from_AVFormatContext(AVFormatContext *pFormatContext,
 
     int i;
 
-    if (!mi || !(*mi = calloc(1,sizeof(PKSTMediaInfo))))  {
+    if (!mi || !(*mi = pkst_alloc(sizeof(PKSTMediaInfo))))  {
         return -1;
     }
 
-    (*mi)->format = calloc(1,strlen(pFormatContext->iformat->name)+1);
+    (*mi)->format = pkst_alloc(strlen(pFormatContext->iformat->name)+1);
     if ((*mi)->format == NULL) {
         return -1;
     }
@@ -108,7 +108,7 @@ int pkst_extract_mediainfo_from_AVFormatContext(AVFormatContext *pFormatContext,
         (*mi)->fps = av_q2d(stream->avg_frame_rate);
         (*mi)->video_bitrate_kbps = stream->codecpar->bit_rate / 1000;
 
-        (*mi)->video_codec = calloc(1,strlen(avcodec_get_name(stream->codecpar->codec_id)));
+        (*mi)->video_codec = pkst_alloc(strlen(avcodec_get_name(stream->codecpar->codec_id)));
         if ((*mi)->video_codec != NULL) {
             strcpy((*mi)->video_codec, avcodec_get_name(stream->codecpar->codec_id));
         }
@@ -119,7 +119,7 @@ int pkst_extract_mediainfo_from_AVFormatContext(AVFormatContext *pFormatContext,
         (*mi)->audio_bitrate_kbps = stream->codecpar->bit_rate / 1000;
         (*mi)->sample_rate = stream->codecpar->sample_rate;
         (*mi)->audio_channels = stream->codecpar->ch_layout.nb_channels;
-        (*mi)->audio_codec = calloc(1,strlen(avcodec_get_name(stream->codecpar->codec_id)));
+        (*mi)->audio_codec = pkst_alloc(strlen(avcodec_get_name(stream->codecpar->codec_id)));
         if ((*mi)->audio_codec != NULL) {
             strcpy((*mi)->audio_codec, avcodec_get_name(stream->codecpar->codec_id));
         }
@@ -229,7 +229,7 @@ void pkst_free_mediainfo(PKSTMediaInfo **mi) {
 
 
 void pkst_get_error(int err, char **error) {
-    *error = calloc(1,AV_ERROR_MAX_STRING_SIZE);
+    *error = pkst_alloc(AV_ERROR_MAX_STRING_SIZE);
     if (*error) {
         av_strerror(err, *error, AV_ERROR_MAX_STRING_SIZE);
     }
