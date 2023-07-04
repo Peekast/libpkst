@@ -174,6 +174,9 @@ cleanup:
 //    avformat_network_deinit();
     // Enviar tcp si corresponde
 exit:
+    if (arg->callback && arg->opaque) {
+        arg->callback(arg->opaque);
+    }
     *return_value = error;
     free(void_argument);
     return return_value; 
@@ -190,7 +193,7 @@ exit:
  * @return Zero on successful thread creation, or a non-zero error code on failure. In the case of a memory allocation error, 
  *         it returns the AVERROR(ENOMEM) error code. In the case of a pthread creation error, it returns the error code returned by pthread_create.
  */
-int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine) {    
+int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine, callback_routine_t callback, void *opaque) {    
     int error;
     PKSTRoutineArg *arg = pkst_alloc(sizeof(PKSTRoutineArg));
     *routine = pkst_alloc(sizeof(PKSTRoutine));
@@ -200,6 +203,8 @@ int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine
 
     arg->config = config;
     arg->should_exit = &((*routine)->should_exit);
+    arg->callback = callback;
+    arg->opaque = opaque;
 
     atomic_store(arg->should_exit, 0);
 

@@ -5,6 +5,7 @@
 // Includes the header file for the libavformat library.
 #include <libavformat/avformat.h>
 #include "keyvalue.h"
+#include "pkst_strings.h"
 
 // Defines a struct for storing media info.
 typedef struct {

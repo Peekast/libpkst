@@ -8,6 +8,8 @@
 // stdatomic.h is a header file for atomic operations in C
 #include <stdatomic.h>
 
+typedef void (*callback_routine_t)(void*);
+
 // PKSTRoutine struct contains pthread_t routine, which is a POSIX thread identifier, 
 // and atomic_int should_exit, which is an atomic integer flag used to indicate whether the routine should exit
 typedef struct {
@@ -20,6 +22,8 @@ typedef struct {
 typedef struct {
     PKSTEncoderConfig *config;
     atomic_int   *should_exit;
+    callback_routine_t callback;
+    void *opaque;
 } PKSTRoutineArg;
 
 // pkst_iocontext.h is a header file containing declarations related to the I/O context in PKST
@@ -27,7 +31,7 @@ typedef struct {
 
 // Declaration of function to start the encoder routine. It takes a pointer to PKSTEncoderConfig and a pointer to a PKSTRoutine struct.
 // Returns an int indicating the status of the operation.
-extern int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine);
+extern int pkst_start_encoder_routine(PKSTEncoderConfig  *config, PKSTRoutine **routine, callback_routine_t callback, void *opaque);
 
 // Declaration of function to wait for a routine to finish. It takes a pointer to a PKSTRoutine struct and a pointer to the return value.
 // Returns an int indicating the status of the operation.
