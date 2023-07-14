@@ -58,7 +58,7 @@ static void handle_end_reporting(int socket, PKSTMultiOutCtx *out, int error) {
 }
 
 static int handle_audio_encoding(PKSTEncoderConfig *config, PKSTInputCtx *ctx, PKSTMediaInfo *mi) {
-    if (strcmp(mi->audio_codec,config->audio_config->codec)!= 0 || mi->sample_rate != config->audio_config->sample_rate) {
+    if ((mi->audio_codec && strcmp(mi->audio_codec,config->audio_config->codec)!= 0) || mi->sample_rate != config->audio_config->sample_rate) {
         pkst_log(NULL,0, "input require audio encoding");
         AVStream *audio = pkst_get_audio_stream(ctx);
         if (audio) {
