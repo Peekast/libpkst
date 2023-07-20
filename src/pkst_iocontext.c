@@ -486,8 +486,8 @@ cleanup:
  * If the function returns 0, the caller is responsible for eventually freeing the allocated PKSTOutProcCtx array.
  */
 int pkst_open_multiple_ouputs_context(PKSTEncoderConfig *config, PKSTInputCtx *in_ctx, PKSTMultiOutCtx **out_ctx) {
-   AVStream       *streams[2];
-   AVCodecContext *encoder[2];
+   AVStream       *streams[2] = { 0 };
+   AVCodecContext *encoder[2] = { 0 };
    
    PKSTOutProcCtx *ctx_p;
    int vindex;
