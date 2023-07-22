@@ -208,9 +208,9 @@ cleanup:
         avformat_close_input(&pFormatContext);
         avformat_free_context(pFormatContext);
     }
-    if (avioBuffer != NULL) {
-        av_free(avioBuffer);
-    }
+    //if (avioBuffer != NULL) {
+    //    av_free(avioBuffer);
+    //}
     return ret;
 }
 

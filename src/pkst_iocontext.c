@@ -219,7 +219,7 @@ static void pkst_free_output_config(PKSTOutputConfig *out) {
  */
 void pkst_free_encoder_config(PKSTEncoderConfig **enc) {
     int i;
-    if (*enc) {
+    if (enc && *enc) {
         if ((*enc)->in) {
             free((*enc)->in);
         }

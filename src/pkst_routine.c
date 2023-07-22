@@ -149,7 +149,8 @@ static void *pkst_encoder_routine(void *void_argument) {
             char *msg = dump_multi_out_ctx_json(out, 0);
             if (pkst_send_data(socket, msg, MESSAGE_REPORT_STATS) < 0) 
                 socket = 0;
-            free(msg);
+            if (msg) 
+                free(msg);
             msg = NULL;
         }
     }   
