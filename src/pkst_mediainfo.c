@@ -55,8 +55,8 @@ double pkst_estimate_duration_from_AVFormatContext(AVFormatContext *pFormatConte
 
 
 double pkst_extract_duration_from_AVFormatContext(AVFormatContext *pFormatContext) {
-    return pFormatContext->duration != AV_NOPTS_VALUE ? 
-           pFormatContext->duration / AV_TIME_BASE : 
+    return /*pFormatContext->duration != AV_NOPTS_VALUE ? 
+           pFormatContext->duration / AV_TIME_BASE : */
            pkst_estimate_duration_from_AVFormatContext(pFormatContext);
 }
 
