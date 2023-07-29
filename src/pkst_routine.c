@@ -110,19 +110,15 @@ static void *pkst_encoder_routine(void *void_argument) {
     if ((error = pkst_extract_mediainfo_from_AVFormatContext(in->in_ctx, &mi)) < 0)
         goto cleanup;
 
-    handle_mediainfo_reporting(socket, mi);
-
-    pkst_dump_mediainfo(mi);
-
-    // There is a specific configuration
-    error = handle_audio_encoding(arg->config, in, mi);
-    pkst_free_mediainfo(&mi);
-    if (error != 0)
+    if ((error = handle_audio_encoding(arg->config, in, mi)) != 0)
         goto cleanup;
 
     if ((error = pkst_open_multiple_ouputs_context(arg->config, in, &out)) < 0)
         goto cleanup;
 
+    handle_mediainfo_reporting(socket, mi);
+
+    pkst_dump_mediainfo(mi);
     // 
     last_dump_time = out->stats->start_time;
 
@@ -161,6 +157,9 @@ static void *pkst_encoder_routine(void *void_argument) {
     pkst_write_trailers_multiple_contexts(out->ctx, out->ctx_len);
 
 cleanup:
+    if (mi)
+        pkst_free_mediainfo(&mi);
+
     av_packet_free(&pkt);
 
     if (socket) {
