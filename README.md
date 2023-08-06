@@ -15,4 +15,4 @@ libpkst is a multiple remuxer that takes an input stream and distributes it to m
 
 `patch -p0 < tls_securetransport.patch`
 
-`./configure --enable-pic --enable-shared`
+`./configure --enable-pic --enable-shared --enable-openssl`
