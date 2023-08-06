@@ -1,0 +1,21 @@
+--- tls_schannel.c	2022-11-04 20:16:28.000000000 +0000
++++ tls_schannel.c	2023-05-27 21:00:02.079144263 +0000
+@@ -415,8 +415,16 @@
+             }
+         }
+ 
+-        ret = ffurl_read(s->tcp, c->enc_buf + c->enc_buf_offset,
+-                         c->enc_buf_size - c->enc_buf_offset);
++        int set_flag_nonblock = 0;
++		if (h->flags&AVIO_FLAG_NONBLOCK && !(s->tcp->flags&AVIO_FLAG_NONBLOCK)) {
++            s->tcp->flags |= AVIO_FLAG_NONBLOCK;
++            set_flag_nonblock = 1;
++		}
++		ret = ffurl_read(s->tcp, c->enc_buf + c->enc_buf_offset,
++						c->enc_buf_size - c->enc_buf_offset);
++		if (set_flag_nonblock)
++		    s->tcp->flags &= ~AVIO_FLAG_NONBLOCK;
++            	
+         if (ret == AVERROR_EOF) {
+             c->connection_closed = 1;
+             ret = 0;

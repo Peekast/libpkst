@@ -1,0 +1,19 @@
+--- tls_securetransport.c	2022-11-04 20:16:28.000000000 +0000
++++ tls_securetransport.c	2023-05-27 21:00:02.143144655 +0000
+@@ -198,7 +198,16 @@
+     URLContext *h = (URLContext*)connection;
+     TLSContext *c = h->priv_data;
+     size_t requested = *dataLength;
++    int set_flag_nonblock = 0;
++
++	if (h->flags&AVIO_FLAG_NONBLOCK && !(c->tls_shared.tcp->flags&AVIO_FLAG_NONBLOCK)) {
++		c->tls_shared.tcp->flags |= AVIO_FLAG_NONBLOCK;
++		set_flag_nonblock = 1;
++	}
+     int read = ffurl_read(c->tls_shared.tcp, data, requested);
++    if (set_flag_nonblock)
++    	c->tls_shared.tcp->flags &= ~AVIO_FLAG_NONBLOCK;
++
+     if (read <= 0) {
+         *dataLength = 0;
+         switch(AVUNERROR(read)) {
