@@ -8,7 +8,7 @@ typedef struct {
     size_t buf_len;
     size_t pos;
 } PKSTIOBuffer;
-
+//PKstIOBuffer
 
 extern int ioread_buffer(void *opaque, uint8_t *buf, int buf_size);
 #endif

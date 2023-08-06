@@ -116,16 +116,19 @@ int pkst_add_output_encoder_config(PKSTEncoderConfig *enc, PKSTOutputConfig *out
 /**
  * @brief Add an audio encoder configuration to an encoder configuration structure.
  *
- * This function duplicates the input audio configuration and stores it in the encoder
- * configuration structure. The audio configuration includes details such as the audio codec,
- * bitrate, number of channels, and sample rate.
+ * This function duplicates the provided audio configuration and appends it to the specified 
+ * encoder configuration structure. The audio configuration encompasses attributes such as 
+ * the audio codec, bitrate, channel count, and sample rate. Additionally, the function allows
+ * the user to specify if audio encoding should be forcibly applied regardless of the current 
+ * configuration.
  *
- * @param enc The encoder configuration structure to which the audio configuration is added.
- * @param config The audio configuration to be duplicated and added.
+ * @param enc The encoder configuration structure where the duplicated audio configuration will be stored.
+ * @param config The audio configuration that will be cloned and attached to the encoder configuration.
+ * @param force_encoding A flag indicating whether to enforce audio encoding irrespective of the existing setup.
  *
- * @return Returns 0 on successful addition, -1 on error (for instance, if allocation fails or if the inputs are NULL).
+ * @return Returns 0 if the addition is successful, -1 if an error occurs (e.g., memory allocation issues or NULL inputs).
  */
-int pkst_add_audio_encoder_config(PKSTEncoderConfig *enc, PKSTAudioConfig *config) {
+int pkst_add_audio_encoder_config(PKSTEncoderConfig *enc, PKSTAudioConfig *config, int force_encoding) {
     if (!enc || !config)
         return -1; // Retornar algún código de error o hacer un manejo de errores adecuado.
 
@@ -139,7 +142,7 @@ int pkst_add_audio_encoder_config(PKSTEncoderConfig *enc, PKSTAudioConfig *confi
         enc->audio_config = NULL;
         return -1; // Error al duplicar el string.
     }
-
+    enc->force_audio_encoding = force_encoding;
     enc->audio_config->bitrate_bps = config->bitrate_bps;
     enc->audio_config->channels = config->channels;
     enc->audio_config->sample_rate = config->sample_rate;
@@ -288,7 +291,6 @@ void pkst_close_input_context(PKSTInputCtx **ctx) {
  * If any errors occur during the process, the function performs cleanup: it closes the AVFormatContext, frees the PKSTInputCtx,
  * sets the PKSTInputCtx pointer to NULL, and returns -1.
  */
-
 int pkst_open_input_context(PKSTEncoderConfig *config, PKSTInputCtx **ctx) {
     char timeout[32];
     AVDictionary *options = NULL;
@@ -411,7 +413,7 @@ static AVFormatContext *pkst_open_output_context(PKSTOutputConfig *config, AVStr
             ret = avcodec_parameters_copy(out_stream->codecpar, remux[i]->codecpar);
             if (ret < 0) goto cleanup;
 
-            out_stream->codecpar->codec_tag = 0;
+            out_stream->codecpar->codec_tag = 0;            
             av_dict_set(&(out_stream->metadata), "handler_name",HANDLER_NAME, 0);
         }
     }
@@ -425,7 +427,7 @@ static AVFormatContext *pkst_open_output_context(PKSTOutputConfig *config, AVStr
             if (ret < 0) goto cleanup;
 
             if (i == PKST_AUDIO_STREAM_OUTPUT) {
-                out_stream->time_base.den = 44100; //input_codec_context->sample_rate;
+                out_stream->time_base.den = encoder[i]->sample_rate;//44100; //input_codec_context->sample_rate;
                 out_stream->time_base.num = 1;
             }
             if (ofmt->flags & AVFMT_GLOBALHEADER)
@@ -796,10 +798,18 @@ int pkst_flush_audio_encoder_queue(PKSTInputCtx *in, PKSTMultiOutCtx *out) {
     return error;
 }
 
-int pkst_process_av_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *output_fail) {
+int pkst_process_av_packet(PKSTts *ts, AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *output_fail) {
     int error;
 
     if (!(error = pkst_read_packet(in, pkt))) { 
+        if (ts->first_packet) {
+            ts->start_pts = pkt->pts;
+            ts->start_dts = pkt->dts;
+            ts->first_packet = 0;
+        }
+        pkt->pts = pkt->pts - ts->start_pts;
+        pkt->dts = pkt->dts - ts->start_dts;
+
         if (pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
             error = pkst_process_audio_packet(pkt, in, out, output_fail);
         } else {

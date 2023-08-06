@@ -35,7 +35,7 @@ typedef struct {
     char *kv_opts;            // Key-Value options to apply on output.
     int  onfail_ignore;       // Boolean flag indicating whether to ignore failures (1 = ignore, 0 = don't ignore).
 } PKSTOutputConfig;
-
+//PKOutputConfig
 
 /* 
  * Struct representing the configuration of the encoder. This includes
@@ -47,13 +47,15 @@ typedef struct {
     char *in_type;            // Type of the input (for instance, format or protocol type).
     int  listen;              // If in the source need to listen on a socket or protocol.
     int  timeout;             // Network timeout.
+    int  force_audio_encoding;
+    int  force_video_encoding;
     char *tcpstats;           // Socket to send the destination report. This value could be NULL (e.g. tcp://<ip>:<port>).
     int  outs_len;            // Number of outputs configured.
     PKSTAudioConfig  *audio_config;
     PKSTVideoConfig  *video_config;
     PKSTOutputConfig *outs[MAX_OUTPUTS];   // An array of output configurations.
 } PKSTEncoderConfig;
-
+//PKstEncoderConfig
 /* 
  * Struct representing the input context used in processing. 
  * It contains information about the format context of the input 
@@ -65,7 +67,7 @@ typedef struct {
     PKSTVideoEncode *v_enc_ctx;
     int streams[2];          // Array of stream indices. Typically, one for audio and one for video.
 } PKSTInputCtx;
-
+//PKstInputContext
 typedef struct {
     int input_pkts;
     int output_pkts;
@@ -73,6 +75,12 @@ typedef struct {
     time_t current_time;
 } PKSTStats;
 
+typedef struct {
+    int64_t start_pts;
+    int64_t start_dts;
+    int first_packet;
+} PKSTts;
+//PKstStartTimecode
 /* 
  * Struct representing the output context used in processing. 
  * It contains information about the format context of the output, 
@@ -85,13 +93,14 @@ typedef struct {
     int status;               // Status of the output process. The specific values it can take might depend on your program.  
     int onfail_ignore;        // Boolean flag indicating whether to ignore failures (1 = ignore, 0 = don't ignore).
 } PKSTOutProcCtx;
-
+//PKstOutputContext
 
 typedef struct {
     int ctx_len;
     PKSTStats *stats;
     PKSTOutProcCtx *ctx[MAX_OUTPUTS];
 } PKSTMultiOutCtx;
+//PKstMultipleOutputContext
 
 /* 
  * Function to allocate and initialize a new PKSTEncoderConfig structure. 
@@ -124,16 +133,19 @@ extern int pkst_add_output_encoder_config(PKSTEncoderConfig *enc, PKSTOutputConf
 /**
  * @brief Add an audio encoder configuration to an encoder configuration structure.
  *
- * This function duplicates the input audio configuration and stores it in the encoder
- * configuration structure. The audio configuration includes details such as the audio codec,
- * bitrate, number of channels, and sample rate.
+ * This function duplicates the provided audio configuration and appends it to the specified 
+ * encoder configuration structure. The audio configuration encompasses attributes such as 
+ * the audio codec, bitrate, channel count, and sample rate. Additionally, the function allows
+ * the user to specify if audio encoding should be forcibly applied regardless of the current 
+ * configuration.
  *
- * @param enc The encoder configuration structure to which the audio configuration is added.
- * @param config The audio configuration to be duplicated and added.
+ * @param enc The encoder configuration structure where the duplicated audio configuration will be stored.
+ * @param config The audio configuration that will be cloned and attached to the encoder configuration.
+ * @param force_encoding A flag indicating whether to enforce audio encoding irrespective of the existing setup.
  *
- * @return Returns 0 on successful addition, -1 on error (for instance, if allocation fails or if the inputs are NULL).
+ * @return Returns 0 if the addition is successful, -1 if an error occurs (e.g., memory allocation issues or NULL inputs).
  */
-extern int pkst_add_audio_encoder_config(PKSTEncoderConfig *enc, PKSTAudioConfig *config);
+extern int pkst_add_audio_encoder_config(PKSTEncoderConfig *enc, PKSTAudioConfig *config, int force_encoding);
 
 
 /* 
@@ -234,7 +246,7 @@ extern void pkst_write_trailers_multiple_contexts(PKSTOutProcCtx *outputs[], siz
 extern int pkst_audiovideo_process(PKSTInputCtx *in, PKSTMultiOutCtx *out, int socket);
 extern AVStream *pkst_get_audio_stream(PKSTInputCtx *ctx);
 
-extern int pkst_process_av_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *output_fail);
+extern int pkst_process_av_packet(PKSTts *ts, AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *output_fail);
 extern void dump_multi_out_ctx(const PKSTMultiOutCtx *multi_out_ctx);
 extern char *dump_multi_out_ctx_json(const PKSTMultiOutCtx *multi_out_ctx, int error);
 

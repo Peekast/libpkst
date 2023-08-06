@@ -16,6 +16,7 @@ typedef struct {
     pthread_t  routine;
     atomic_int should_exit;
 } PKSTRoutine;
+// PKstRoutine
 
 // PKSTRoutineArg struct contains a pointer to the PKSTEncoderConfig struct and an atomic_int should_exit flag. 
 // This struct is used as an argument when starting the encoder routine.
@@ -25,6 +26,7 @@ typedef struct {
     callback_routine_t callback;
     void *opaque;
 } PKSTRoutineArg;
+//PKstRoutineArgument
 
 // pkst_iocontext.h is a header file containing declarations related to the I/O context in PKST
 #include "pkst_iocontext.h"

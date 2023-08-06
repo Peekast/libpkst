@@ -57,9 +57,30 @@ static void handle_end_reporting(int socket, PKSTMultiOutCtx *out, int error) {
     }
 }
 
+/**
+ * This function checks if audio encoding is required based on the provided encoder configuration, input context, 
+ * and media information. Encoding is deemed necessary if there's a mismatch in audio codec or sample rate, or 
+ * if audio encoding is explicitly forced via the encoder configuration. 
+ * 
+ * If encoding is required, the function initializes the audio decoder and encoder, then returns their status. 
+ * If encoding is not required, the function simply returns without performing any action.
+ * 
+ * @param config A pointer to a PKSTEncoderConfig structure containing the encoder's audio configurations, such as 
+ *               the desired codec, sample rate, and an option to force encoding.
+ * 
+ * @param ctx    A pointer to a PKSTInputCtx structure that holds the input context, which includes details about 
+ *               the input streams and associated codec contexts.
+ * 
+ * @param mi     A pointer to a PKSTMediaInfo structure that provides media-related information, including the audio 
+ *               codec and sample rate of the input data.
+ * 
+ * @return An integer representing the status of the audio encoding process. A return value of 0 indicates success, 
+ *         while a non-zero value indicates an error or that encoding was not performed.
+ */
 static int handle_audio_encoding(PKSTEncoderConfig *config, PKSTInputCtx *ctx, PKSTMediaInfo *mi) {
-    if ((mi->audio_codec && strcmp(mi->audio_codec,config->audio_config->codec)!= 0) || mi->sample_rate != config->audio_config->sample_rate) {
-        pkst_log(NULL,0, "input require audio encoding");
+    if (config->audio_config && mi->audio_codec && 
+        (strcmp(mi->audio_codec, config->audio_config->codec) != 0 || mi->sample_rate != config->audio_config->sample_rate || config->force_audio_encoding)) {
+        pkst_log(NULL, 0, "input requires audio encoding");
         AVStream *audio = pkst_get_audio_stream(ctx);
         if (audio) {
             return pkst_open_audio_decoder_encoder(audio, config->audio_config, &(ctx->a_enc_ctx));
@@ -86,6 +107,7 @@ static void *pkst_encoder_routine(void *void_argument) {
     PKSTRoutineArg *arg  = void_argument;
     PKSTMediaInfo *mi    = NULL;
     PKSTInputCtx *in     = NULL;
+    PKSTts ts;
     AVPacket *pkt        = NULL;
     time_t last_dump_time;
     int socket = 0;
@@ -122,9 +144,11 @@ static void *pkst_encoder_routine(void *void_argument) {
     // 
     last_dump_time = out->stats->start_time;
 
+    ts.first_packet = 1;
+
     while(!atomic_load(arg->should_exit)) {
 
-        error = pkst_process_av_packet(pkt, in, out, &output_fail);
+        error = pkst_process_av_packet(&ts, pkt, in, out, &output_fail);
 
         if (error < 0) {
             if (error == AVERROR_EOF)

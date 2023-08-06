@@ -23,7 +23,7 @@ typedef struct {
     int    audio_channels;         // Number of audio channels in the media.
     int    sample_rate;            // Sample rate of the audio in the media.
 } PKSTMediaInfo;
-
+//PKstMediaInfo
 
 // Declaration of a function that extracts media info from a file. 
 extern int pkst_extract_mediainfo_from_file(const char *filename, PKSTMediaInfo **mi);
