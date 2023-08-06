@@ -1,7 +1,7 @@
 # Definir el compilador
 CC = gcc
 
-CFLAGS = -fPIC -Wall -g `pkg-config --cflags libavcodec libavdevice libavfilter libavformat libavutil libswresample libswscale jansson`
+CFLAGS = -fPIC -Wall -ggdb `pkg-config --cflags libavcodec libavdevice libavfilter libavformat libavutil libswresample libswscale jansson`
 LDFLAGS = `pkg-config --libs libavcodec libavdevice libavfilter libavformat libavutil libswresample libswscale jansson`
 
 # Definir la biblioteca compartida
