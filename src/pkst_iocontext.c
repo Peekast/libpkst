@@ -166,7 +166,7 @@ void pkst_dump_encoder_config(PKSTEncoderConfig *enc) {
     pkst_log(NULL,0,"    Input: %s\n", enc->in ? enc->in : "NULL");
     pkst_log(NULL,0,"    Input Type: %s\n", enc->in_type ? enc->in_type : "NULL");
     pkst_log(NULL,0,"    Listen: %s\n", enc->listen ? "true" : "false");
-    pkst_log(NULL,0,"    Network timeout: %d (milliseconds)\n", enc->timeout);
+    pkst_log(NULL,0,"    Network timeout: %d (seconds)\n", enc->timeout);
     pkst_log(NULL,0,"    TCP Stats: %s\n", enc->tcpstats ? enc->tcpstats : "NULL");
     pkst_log(NULL,0,"    Output Length: %d\n", enc->outs_len);
 
@@ -303,8 +303,13 @@ int pkst_open_input_context(PKSTEncoderConfig *config, PKSTInputCtx **ctx) {
     if (config->listen) {
         av_dict_set(&options, "listen", "1", 0);
         if (config->timeout) {
-            sprintf(timeout, "%d", config->timeout * 1000);
-            av_dict_set(&options, "listen_timeout", timeout, 0);
+            if (config->in_type && !strcmp(config->in_type, "flv")) {
+                sprintf(timeout, "%d", config->timeout);
+                av_dict_set(&options, "timeout", timeout, 0);
+            } else {
+                sprintf(timeout, "%d", config->timeout * 1000);
+                av_dict_set(&options, "listen_timeout", timeout, 0);
+            }
         }
     }
 
@@ -446,7 +451,6 @@ static AVFormatContext *pkst_open_output_context(PKSTOutputConfig *config, AVStr
     if (config->kv_opts) {
         kv_opts = parse_kv_list(config->kv_opts, PKST_PAIR_DELIM, PKST_KV_DELIM);
         if (kv_opts) {
-            dump_kv_list(kv_opts);
             for (i=0; i < kv_opts->count; i++) 
                 av_dict_set(&opts, kv_opts->items[i].key, kv_opts->items[i].value, 0);
             free_kv_list(kv_opts);

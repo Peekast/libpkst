@@ -12,18 +12,16 @@ void pkst_log_callback(void* ptr, int level, const char* fmt, va_list vl) {
     pthread_t id;
     if (level <= av_log_get_level()) {
         id = pthread_self();
-        
-        time_t current_time;
-        char* c_time_string;
-        
-        current_time = time(NULL);
-        c_time_string = ctime(&current_time);
-        char* pos = strchr(c_time_string, '\n');
-        if (pos) {
-            *pos = '\0';
-        }
-        /* Note that ctime() has already added a terminating newline character */
-        fprintf(logFile, "[%s] pthread: %lx - ", c_time_string, (unsigned long) id);
+
+        time_t rawtime;
+        struct tm *timeinfo;
+        char buffer[80];
+
+        time(&rawtime);
+        timeinfo = gmtime(&rawtime);  // Usar gmtime para obtener el tiempo en UTC
+
+        strftime(buffer, sizeof(buffer), "[%Y-%m-%d %H:%M:%S.000000 +0000 UTC]", timeinfo);
+        fprintf(logFile, "%s Pthread: %lx - ", buffer, (unsigned long) id);
         vfprintf(logFile, fmt, vl);
     }
 }

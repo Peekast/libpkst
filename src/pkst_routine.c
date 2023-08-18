@@ -80,7 +80,7 @@ static void handle_end_reporting(int socket, PKSTMultiOutCtx *out, int error) {
 static int handle_audio_encoding(PKSTEncoderConfig *config, PKSTInputCtx *ctx, PKSTMediaInfo *mi) {
     if (config->audio_config && mi->audio_codec && 
         (strcmp(mi->audio_codec, config->audio_config->codec) != 0 || mi->sample_rate != config->audio_config->sample_rate || config->force_audio_encoding)) {
-        pkst_log(NULL, 0, "input requires audio encoding");
+        pkst_log(NULL, 0, "input requires audio encoding\n");
         AVStream *audio = pkst_get_audio_stream(ctx);
         if (audio) {
             return pkst_open_audio_decoder_encoder(audio, config->audio_config, &(ctx->a_enc_ctx));
@@ -203,7 +203,7 @@ exit:
     }
     *return_value = error;
     free(void_argument);
-    return return_value; 
+    pthread_exit(return_value); 
 }
 
 /**
@@ -277,9 +277,17 @@ void pkst_cancel_routine(PKSTRoutine *routine) {
  */
 int pkst_wait_routine(PKSTRoutine **routine, void *ret) {
     int error;
+    void* thread_return = NULL;
+    
     if (routine && *routine) {
-        if ((error = pthread_join((*routine)->routine, ret)) != 0)
+        if ((error = pthread_join((*routine)->routine, &thread_return)) != 0)
             return error;
+
+
+        if (thread_return) {
+            *(int *)ret = *((int*) thread_return);
+            free(thread_return); 
+        }
 
         free(*routine);
         *routine = NULL;
