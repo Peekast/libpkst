@@ -16,7 +16,7 @@
 #define BOOL_TRUE  1
 #define BOOL_FALSE 0
 
-#define MAX_OUTPUTS 4
+#define MAX_OUTPUTS 10
 
 #define PKST_VIDEO_STREAM_OUTPUT 0
 #define PKST_AUDIO_STREAM_OUTPUT 1
