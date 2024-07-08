@@ -300,22 +300,34 @@ int pkst_open_input_context(PKSTEncoderConfig *config, PKSTInputCtx **ctx) {
     AVStream *in_stream;
     int ret, i;
 
+
+
     if (config->listen) {
         av_dict_set(&options, "listen", "1", 0);
-        if (config->timeout) {
-            if (config->in_type && !strcmp(config->in_type, "flv")) {
+    }
+
+    if (config->timeout) {
+        if (config->in_type) {
+            if (!strcmp(config->in_type, "flv")) {
                 sprintf(timeout, "%d", config->timeout);
                 av_dict_set(&options, "timeout", timeout, 0);
-            } else {
-                sprintf(timeout, "%d", config->timeout * 1000);
-                av_dict_set(&options, "listen_timeout", timeout, 0);
+            } else if (!strcmp(config->in_type, "sdp")) {
+                sprintf(timeout, "%d", config->timeout * 1000000);
+                av_dict_set(&options, "-rw_timeout", timeout, 0);
             }
+        } else {
+            sprintf(timeout, "%d", config->timeout * 1000);
+            av_dict_set(&options, "listen_timeout", timeout, 0);
         }
     }
 
-    if (config->in_type) {
+    if (config->in_type && !strcmp(config->in_type, "flv")) {
         infmt = av_find_input_format(config->in_type);
         if (!infmt) return -1;
+    }
+
+    if (config->in_type && !strcmp(config->in_type, "sdp")) {
+        av_dict_set(&options, "protocol_whitelist", "file,udp,rtp", 0);
     }
 
     *ctx = pkst_alloc(sizeof(PKSTInputCtx));
@@ -812,7 +824,10 @@ int pkst_process_av_packet(PKSTts *ts, AVPacket *pkt, PKSTInputCtx *in, PKSTMult
             ts->first_packet = 0;
         }
         pkt->pts = pkt->pts - ts->start_pts;
-        pkt->dts = pkt->dts - ts->start_dts;
+        if (ts->start_dts < 0)
+            pkt->dts = pkt->dts + ts->start_dts;
+        else 
+            pkt->dts = pkt->dts - ts->start_dts;
         if (pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
             error = pkst_process_audio_packet(pkt, in, out, output_fail);
         } else {
