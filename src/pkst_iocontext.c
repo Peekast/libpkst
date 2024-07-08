@@ -313,7 +313,7 @@ int pkst_open_input_context(PKSTEncoderConfig *config, PKSTInputCtx **ctx) {
                 av_dict_set(&options, "timeout", timeout, 0);
             } else if (!strcmp(config->in_type, "sdp")) {
                 sprintf(timeout, "%d", config->timeout * 1000000);
-                av_dict_set(&options, "-rw_timeout", timeout, 0);
+                av_dict_set(&options, "rw_timeout", timeout, 0);
             }
         } else {
             sprintf(timeout, "%d", config->timeout * 1000);
