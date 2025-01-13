@@ -821,7 +821,7 @@ int pkst_process_av_packet(PKSTts *ts, AVPacket *pkt, PKSTInputCtx *in, PKSTMult
         if (ts->first_packet) {
             ts->start_pts = pkt->pts;
             if (pkt->dts > pkt->pts) 
-                ts->start_dts = pkt->dts;
+                ts->start_dts = pkt->pts;
             else 
                 ts->start_dts = pkt->dts;
             ts->first_packet = 0;
