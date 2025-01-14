@@ -711,8 +711,7 @@ void mostrar_informacion_paquete(AVFormatContext *in_ctx, AVPacket *pkt) {
            pkt->size, pkt->pts, pkt->dts, pkt->stream_index, tipo_stream, codec_name);
 
     if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-        printf("Frecuencia de muestreo: %d Hz, Canales de audio: %d\n", 
-               stream->codecpar->sample_rate, stream->codecpar->channels);
+
     } else if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
         printf("Resolución: %dx%d, FPS: %.2f\n", 
                stream->codecpar->width, stream->codecpar->height, av_q2d(stream->avg_frame_rate));
@@ -818,7 +817,7 @@ static int pkst_process_video_packet(AVPacket *pkt, PKSTInputCtx *in, PKSTMultiO
     out->stats->input_pkts++;
 
     if (in->v_enc_ctx) {
-        // Nothing
+        printf("OJO, que por alguna razon esta entrando aca ---------------------------");
     } else {;
         error = pkst_send_AVPacket_multiple_contexts(pkt, in_stream->time_base, stream_type, out->ctx, out->ctx_len, fail);
         if (error <0) return error;
