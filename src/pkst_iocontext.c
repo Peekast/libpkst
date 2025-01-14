@@ -823,7 +823,7 @@ int pkst_process_av_packet(PKSTts *ts, AVPacket *pkt, PKSTInputCtx *in, PKSTMult
             ts->start_dts = pkt->dts;
         }
         pkt->pts = pkt->pts - ts->start_pts;
-        pkt->dts = pkt->dts - ts->start_pts;
+        pkt->dts = pkt->dts - ts->start_dts;
         if (pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
             error = pkst_process_audio_packet(pkt, in, out, output_fail);
         } else {
