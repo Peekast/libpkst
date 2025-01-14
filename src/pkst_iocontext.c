@@ -817,6 +817,7 @@ int pkst_flush_audio_encoder_queue(PKSTInputCtx *in, PKSTMultiOutCtx *out) {
 int pkst_process_av_packet(PKSTts *ts, AVPacket *pkt, PKSTInputCtx *in, PKSTMultiOutCtx *out, int *output_fail) {
     int error;
 
+    printf("Leyendo paquete\n");
     if (!(error = pkst_read_packet(in, pkt))) { 
         if (ts->first_packet) {
             ts->start_pts = pkt->pts;
