@@ -543,12 +543,12 @@ int pkst_open_multiple_ouputs_context(PKSTEncoderConfig *config, PKSTInputCtx *i
         encoder[PKST_AUDIO_STREAM_OUTPUT] = NULL;
     }
 
-    if (in_ctx->v_enc_ctx) {
+/*    if (in_ctx->v_enc_ctx) {
         streams[PKST_VIDEO_STREAM_OUTPUT] = NULL;
-        encoder[PKST_VIDEO_STREAM_OUTPUT] = in_ctx->a_enc_ctx->out_codec_ctx;
+        encoder[PKST_VIDEO_STREAM_OUTPUT] = in_ctx->v_enc_ctx->out_codec_ctx;
     } else {
         encoder[PKST_VIDEO_STREAM_OUTPUT] = NULL;
-    }
+    } */
 
     for ( i = 0; i < config->outs_len; i++) {
 
@@ -682,6 +682,41 @@ void pkst_write_trailers_multiple_contexts(PKSTOutProcCtx *outputs[], size_t out
     }
 }
 
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libavcodec/avcodec.h>
+#include <stdio.h>
+
+void mostrar_informacion_paquete(AVFormatContext *in_ctx, AVPacket *pkt) {
+    // Obtener el stream correspondiente al índice del paquete
+    AVStream *stream = in_ctx->streams[pkt->stream_index];
+    
+    if (!stream) {
+        printf("Error: No se pudo obtener el stream.\n");
+        return;
+    }
+
+    // Verificar si es un paquete de audio o video
+    const char *tipo_stream = (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) ? "AUDIO" :
+                              (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) ? "VIDEO" : "DESCONOCIDO";
+    
+    const char *codec_name = avcodec_get_name(stream->codecpar->codec_id);
+
+    // Imprimir toda la información en una sola línea
+    printf("Paquete: tamaño = %d bytes, PTS = %ld, DTS = %ld, Stream: %d (%s), Codec: %s, ", 
+           pkt->size, pkt->pts, pkt->dts, pkt->stream_index, tipo_stream, codec_name);
+
+    if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+        printf("Frecuencia de muestreo: %d Hz, Canales de audio: %d\n", 
+               stream->codecpar->sample_rate, stream->codecpar->channels);
+    } else if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+        printf("Resolución: %dx%d, FPS: %.2f\n", 
+               stream->codecpar->width, stream->codecpar->height, av_q2d(stream->avg_frame_rate));
+    } else {
+        printf("Información adicional no disponible.\n");
+    }
+}
+
 /**
  * @brief Reads a video or audio frame from the specified input context.
  * 
@@ -700,6 +735,8 @@ static int pkst_read_packet(PKSTInputCtx *in, AVPacket *pkt) {
         error = av_read_frame(in->in_ctx, pkt);
         if (error < 0)
             return error;
+
+        mostrar_informacion_paquete(in->in_ctx, pkt);
 
         if (pkt->stream_index != in->streams[PKST_VIDEO_STREAM_OUTPUT] &&
             pkt->stream_index != in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
@@ -827,7 +864,7 @@ int pkst_process_av_packet(PKSTts *ts, AVPacket *pkt, PKSTInputCtx *in, PKSTMult
         pkt->pts = pkt->pts - ts->start_pts;
         pkt->dts = pkt->dts - ts->start_dts;
         /* Borrar */
-        printf("%s, pts: %ld, dts: %ld\n", pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT] ? "audio" : "video", pkt->pts, pkt->dts);
+        printf("%s, %d, pts: %ld, dts: %ld\n", pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT] ? "audio" : "video", pkt->stream_index,pkt->pts, pkt->dts);
         if (pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
             error = pkst_process_audio_packet(pkt, in, out, output_fail);
         } else {
