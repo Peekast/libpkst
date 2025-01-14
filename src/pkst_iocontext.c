@@ -330,6 +330,10 @@ int pkst_open_input_context(PKSTEncoderConfig *config, PKSTInputCtx **ctx) {
         av_dict_set(&options, "protocol_whitelist", "file,udp,rtp", 0);
     }
 
+    av_dict_set(&options, "probesize", "5000000", 0);   // Aumentar el tamaño de análisis
+    av_dict_set(&options, "analyzeduration", "1000000", 0); // Aumentar el tiempo de análisis
+
+
     *ctx = pkst_alloc(sizeof(PKSTInputCtx));
     if (*ctx == NULL) return -1;
 
