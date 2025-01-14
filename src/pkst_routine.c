@@ -115,6 +115,8 @@ static void *pkst_encoder_routine(void *void_argument) {
     int *return_value = pkst_alloc(sizeof(int));
     int output_fail;
 
+    av_log_set_level(AV_LOG_INFO);
+
     pkt = av_packet_alloc();
     if (!pkt) {
         error = AVERROR(ENOMEM);

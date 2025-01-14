@@ -825,6 +825,8 @@ int pkst_process_av_packet(PKSTts *ts, AVPacket *pkt, PKSTInputCtx *in, PKSTMult
         }
         pkt->pts = pkt->pts - ts->start_pts;
         pkt->dts = pkt->dts - ts->start_dts;
+        /* Borrar */
+        printf("%s, pts: %ld, dts: %ld\n", pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT] ? "audio" : "video", pkt->pts, pkt->dts);
         if (pkt->stream_index == in->streams[PKST_AUDIO_STREAM_OUTPUT]) {
             error = pkst_process_audio_packet(pkt, in, out, output_fail);
         } else {
